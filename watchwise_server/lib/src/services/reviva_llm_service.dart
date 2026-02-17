@@ -3,7 +3,7 @@ import 'dart:convert';
 
 /// Service to interact with Reviva LLM API for AI conversations
 class RevivaLLMService {
-  static const String _baseUrl = 'http://llm.rafante-tec.online';
+  static const String _baseUrl = 'https://llm.rafante-tec.online';
   
   final HttpClient _httpClient;
   
@@ -35,23 +35,22 @@ class RevivaLLMService {
   }
   
   String _buildSystemPrompt() {
-    return '''Você é a IA do AIssist, uma plataforma de recomendações de filmes e séries.
+    return '''Você é a IA especialista em filmes do AIssist. Seu trabalho é recomendar filmes e séries baseado no que o usuário descreve.
 
-PERSONALIDADE:
-- Amigável, empolgado e conhecedor de cinema
-- Fala em português brasileiro
-- Usa emojis quando apropriado
-- É conciso mas detalhado quando necessário
+COMO RESPONDER:
+1. Entenda o que o usuário quer (gênero, humor, estilo)
+2. Recomende 2-3 filmes específicos com ano
+3. Explique brevemente PORQUE cada um é uma boa escolha
+4. Use português brasileiro e seja empolgado
+5. NUNCA dê spoilers - apenas premissa, gênero, diretor, atores
 
-REGRAS IMPORTANTES:
-- JAMAIS dê spoilers de filmes ou séries
-- Foque em gênero, diretor, ano, atores principais, premissa geral
-- Se o usuário pedir algo específico demais, sugira alternativas
-- Sempre explique POURQUÊ está recomendando
-- Mantenha tom conversacional, não formal
+EXEMPLO:
+"🎬 Entendi! Ficção científica inteligente mas acessível. Recomendo:
+- Source Code (2011) - Viagem no tempo mais direta que Inception
+- Ex Machina (2014) - IA e filosofia, visualmente lindo
+- Arrival (2016) - Aliens e linguística, emociona sem confundir"
 
-EXEMPLO DE RESPOSTA:
-"🎬 Entendi perfeitamente! Você quer ficção científica inteligente como Inception, mas sem a complexidade narrativa. Vou recomendar filmes que têm conceitos interessantes mas são mais diretos de acompanhar..."''';
+Seja conciso, específico e útil.''';
   }
   
   String _buildUserPrompt(String userQuery, List<Map<String, dynamic>>? movieContext) {
@@ -84,11 +83,11 @@ Resposta:''';
     required String systemPrompt,
     required String userPrompt,
   }) async {
-    // Set timeout for LLM requests (30 seconds max)
-    _httpClient.connectionTimeout = const Duration(seconds: 30);
+    // Set timeout for LLM requests (25 seconds max - Ollama is slow)
+    _httpClient.connectionTimeout = const Duration(seconds: 25);
     
     final request = await _httpClient.postUrl(
-      Uri.parse('$_baseUrl/v1/chat/completions'),
+      Uri.parse('$_baseUrl/api/generate'), // Correct Ollama endpoint
     );
     
     request.headers.contentType = ContentType.json;
@@ -98,16 +97,24 @@ Resposta:''';
     final encoded = base64Encode(utf8.encode(credentials));
     request.headers.add('Authorization', 'Basic $encoded');
     
-    print('🔗 Sending request to LLM...');
+    print('🔗 Sending request to Ollama /api/generate...');
+    
+    // Combine system prompt and user prompt for Ollama generate API
+    final combinedPrompt = '''$systemPrompt
+
+USUÁRIO: $userPrompt
+
+ASSISTENTE:''';
     
     final body = jsonEncode({
-      'model': 'reviva:latest', // Using Reviva's custom model
-      'messages': [
-        {'role': 'system', 'content': systemPrompt},
-        {'role': 'user', 'content': userPrompt},
-      ],
-      'max_tokens': 300,
-      'temperature': 0.7,
+      'model': 'reviva:latest',
+      'prompt': combinedPrompt,
+      'stream': false, // Important: get complete response
+      'options': {
+        'temperature': 0.7,
+        'max_tokens': 300,
+        'top_p': 0.9,
+      }
     });
     
     request.write(body);
@@ -115,16 +122,22 @@ Resposta:''';
     final response = await request.close();
     final responseBody = await response.transform(utf8.decoder).join();
     
-    print('📥 LLM Response Status: ${response.statusCode}');
+    print('📥 Ollama Response Status: ${response.statusCode}');
     
     if (response.statusCode == 200) {
       final data = jsonDecode(responseBody);
-      final content = data['choices'][0]['message']['content'];
-      print('✅ LLM Content: ${content.substring(0, content.length > 100 ? 100 : content.length)}...');
-      return content;
+      
+      // Ollama uses 'response' field, not 'choices'
+      if (data['response'] != null) {
+        final content = data['response'] as String;
+        print('✅ Ollama Response: ${content.length > 100 ? content.substring(0, 100) + '...' : content}');
+        return content.trim();
+      } else {
+        throw Exception('No response field in Ollama response');
+      }
     } else {
-      print('❌ LLM Error Response: $responseBody');
-      throw Exception('LLM API returned ${response.statusCode}: $responseBody');
+      print('❌ Ollama Error Response: $responseBody');
+      throw Exception('Ollama API returned ${response.statusCode}: $responseBody');
     }
   }
   
