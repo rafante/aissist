@@ -8,14 +8,18 @@ services:
       redis:
         condition: service_healthy
     environment:
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      POSTGRES_DB: watchwise
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 5DSV-jq2bDFrY7oUFXvksaRamSiyJ8nO
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: hRTeXLSLqSx0VPI0IL0b5nUbKKDntbfq
+      # Serverpod configuration via environment variables
+      SERVERPOD_DATABASE_HOST: postgres
+      SERVERPOD_DATABASE_PORT: 5432
+      SERVERPOD_DATABASE_NAME: watchwise
+      SERVERPOD_DATABASE_USER: postgres
+      SERVERPOD_PASSWORD_database: 5DSV-jq2bDFrY7oUFXvksaRamSiyJ8nO
+      SERVERPOD_REDIS_HOST: redis
+      SERVERPOD_REDIS_PORT: 6379
+      SERVERPOD_PASSWORD_redis: hRTeXLSLqSx0VPI0IL0b5nUbKKDntbfq
+      # Run in development mode for Docker
+      SERVERPOD_MODE: development
+      # Custom app variables
       TMDB_API_KEY: 466fd9ba21e369cd51e7743d32b7833f
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080"]
