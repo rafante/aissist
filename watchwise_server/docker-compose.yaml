@@ -22,7 +22,7 @@ services:
       # Custom app variables
       TMDB_API_KEY: 466fd9ba21e369cd51e7743d32b7833f
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
       interval: 30s
       timeout: 10s
       retries: 3

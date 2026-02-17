@@ -20,7 +20,7 @@ COPY . .
 RUN dart compile exe bin/simple_main.dart -o bin/server
 
 # Expose port
-EXPOSE 8080
+EXPOSE 8081
 
 # Set environment variables with defaults
 ENV POSTGRES_HOST=${POSTGRES_HOST:-postgres}

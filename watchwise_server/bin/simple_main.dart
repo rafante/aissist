@@ -10,9 +10,10 @@ Future<void> main() async {
   const apiKey = String.fromEnvironment('TMDB_API_KEY', defaultValue: '466fd9ba21e369cd51e7743d32b7833f');
   final tmdb = TmdbService(apiKey: apiKey);
   
-  // Create HTTP server
-  final server = await HttpServer.bind(InternetAddress.anyIPv4, 8080);
-  print('🚀 Server running on port 8080');
+  // Create HTTP server  
+  final port = int.fromEnvironment('PORT', defaultValue: 8081);
+  final server = await HttpServer.bind(InternetAddress.anyIPv4, port);
+  print('🚀 Server running on port $port');
   
   await for (final request in server) {
     final path = request.uri.path;
