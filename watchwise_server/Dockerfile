@@ -7,13 +7,13 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 # Set working directory
 WORKDIR /app
 
-# Copy pubspec file
+# Copy pubspec file first
 COPY pubspec.yaml ./
 
-# Install dependencies (this generates pubspec.lock)
-RUN dart pub get
+# Get dependencies with verbose output for debugging
+RUN dart pub get --verbose
 
-# Copy source code
+# Copy all source code
 COPY . .
 
 # Compile the application
@@ -22,16 +22,16 @@ RUN dart compile exe bin/main.dart -o bin/server
 # Expose port
 EXPOSE 8080
 
-# Set environment variables
-ENV POSTGRES_HOST=postgres
-ENV POSTGRES_PORT=5432
-ENV POSTGRES_DB=watchwise
-ENV POSTGRES_USER=postgres
-ENV POSTGRES_PASSWORD=5DSV-jq2bDFrY7oUFXvksaRamSiyJ8nO
-ENV REDIS_HOST=redis
-ENV REDIS_PORT=6379
-ENV REDIS_PASSWORD=hRTeXLSLqSx0VPI0IL0b5nUbKKDntbfq
-ENV TMDB_API_KEY=466fd9ba21e369cd51e7743d32b7833f
+# Set environment variables with defaults
+ENV POSTGRES_HOST=${POSTGRES_HOST:-postgres}
+ENV POSTGRES_PORT=${POSTGRES_PORT:-5432}
+ENV POSTGRES_DB=${POSTGRES_DB:-watchwise}
+ENV POSTGRES_USER=${POSTGRES_USER:-postgres}
+ENV POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
+ENV REDIS_HOST=${REDIS_HOST:-redis}
+ENV REDIS_PORT=${REDIS_PORT:-6379}
+ENV REDIS_PASSWORD=${REDIS_PASSWORD:-password}
+ENV TMDB_API_KEY=${TMDB_API_KEY}
 
 # Run the application
 CMD ["./bin/server"]
