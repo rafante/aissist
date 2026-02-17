@@ -7,11 +7,10 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 # Set working directory
 WORKDIR /app
 
-# Copy pubspec files
+# Copy pubspec file
 COPY pubspec.yaml ./
-COPY pubspec.lock ./
 
-# Install dependencies
+# Install dependencies (this generates pubspec.lock)
 RUN dart pub get
 
 # Copy source code
