@@ -112,8 +112,9 @@ ASSISTENTE:''';
       'stream': false, // Important: get complete response
       'options': {
         'temperature': 0.7,
-        'max_tokens': 300,
         'top_p': 0.9,
+        'num_predict': 300, // Ollama uses num_predict instead of max_tokens
+        'stop': ['\nUSUÁRIO:', '\nHUMAN:', '\nUSER:'], // Stop at new user input
       }
     });
     
