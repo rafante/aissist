@@ -1,44 +1,30 @@
 services:
-  # Development services
+  # PostgreSQL with pgvector
   postgres:
     image: pgvector/pgvector:pg16
-    ports:
-      - "8090:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_DB: watchwise
       POSTGRES_PASSWORD: "5DSV-jq2bDFrY7oUFXvksaRamSiyJ8nO"
     volumes:
       - watchwise_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
+  # Redis cache
   redis:
     image: redis:6.2.6
-    ports:
-      - "8091:6379"
     command: redis-server --requirepass "hRTeXLSLqSx0VPI0IL0b5nUbKKDntbfq"
     environment:
       - REDIS_REPLICATION_MODE=master
-
-  # Test services
-  postgres_test:
-    image: pgvector/pgvector:pg16
-    ports:
-      - "9090:5432"
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_DB: watchwise_test
-      POSTGRES_PASSWORD: "y4DccIlobK0JVRWWFSCmKIQO_yUIoGC0"
-    volumes:
-      - watchwise_test_data:/var/lib/postgresql/data
-
-  redis_test:
-    image: redis:6.2.6
-    ports:
-      - "9091:6379"
-    command: redis-server --requirepass "CyKKocwS56gh7OxyY-_Ojp25OVXsDMds"
-    environment:
-      - REDIS_REPLICATION_MODE=master
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "hRTeXLSLqSx0VPI0IL0b5nUbKKDntbfq", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   watchwise_data:
-  watchwise_test_data:
