@@ -15,6 +15,8 @@ class RevivaLLMService {
     List<Map<String, dynamic>>? movieContext,
   }) async {
     try {
+      print('🤖 Calling Reviva LLM for query: $userQuery');
+      
       final systemPrompt = _buildSystemPrompt();
       final userPrompt = _buildUserPrompt(userQuery, movieContext);
       
@@ -23,9 +25,11 @@ class RevivaLLMService {
         userPrompt: userPrompt,
       );
       
+      print('✅ LLM Response received: ${response.length} chars');
       return response;
     } catch (e) {
       print('❌ Error calling Reviva LLM: $e');
+      print('🔄 Using enhanced fallback response');
       return _getFallbackResponse(userQuery);
     }
   }
@@ -80,15 +84,24 @@ Resposta:''';
     required String systemPrompt,
     required String userPrompt,
   }) async {
+    // Set timeout for LLM requests (30 seconds max)
+    _httpClient.connectionTimeout = const Duration(seconds: 30);
+    
     final request = await _httpClient.postUrl(
       Uri.parse('$_baseUrl/v1/chat/completions'),
     );
     
     request.headers.contentType = ContentType.json;
-    request.headers.add('Authorization', 'Bearer sk-dummy-key'); // Adjust as needed
+    
+    // Add Basic Auth credentials for Reviva LLM
+    final credentials = 'rafante2@gmail.com:RevivaTester123';
+    final encoded = base64Encode(utf8.encode(credentials));
+    request.headers.add('Authorization', 'Basic $encoded');
+    
+    print('🔗 Sending request to LLM...');
     
     final body = jsonEncode({
-      'model': 'gpt-3.5-turbo', // Adjust based on Reviva's model
+      'model': 'reviva:latest', // Using Reviva's custom model
       'messages': [
         {'role': 'system', 'content': systemPrompt},
         {'role': 'user', 'content': userPrompt},
@@ -102,35 +115,85 @@ Resposta:''';
     final response = await request.close();
     final responseBody = await response.transform(utf8.decoder).join();
     
+    print('📥 LLM Response Status: ${response.statusCode}');
+    
     if (response.statusCode == 200) {
       final data = jsonDecode(responseBody);
-      return data['choices'][0]['message']['content'];
+      final content = data['choices'][0]['message']['content'];
+      print('✅ LLM Content: ${content.substring(0, content.length > 100 ? 100 : content.length)}...');
+      return content;
     } else {
+      print('❌ LLM Error Response: $responseBody');
       throw Exception('LLM API returned ${response.statusCode}: $responseBody');
     }
   }
   
   String _getFallbackResponse(String query) {
-    // Fallback responses when LLM is not available
-    final fallbacks = {
-      'inception': '🎬 Entendi! Você quer ficção científica inteligente como Inception, mas menos complexa. Recomendo "Source Code" - tem viagem no tempo e ação, mas é bem mais direto. "Minority Report" também é ótimo - futuro, ação e Tom Cruise!',
-      
-      'romantico': '💕 Ah, romance que não seja piegas! Entendo perfeitamente. "Her" é lindo e futurístico, "Eternal Sunshine" é poético mas não meloso, e "(500) Days of Summer" quebra clichês românticos de forma inteligente.',
-      
-      'terror': '😱 Terror psicológico é o melhor! "The Machinist" vai mexer com sua cabeça, "Shutter Island" tem plot twists incríveis, e "Annihilation" mistura sci-fi com horror de forma única.',
-      
-      'comedia': '😂 Comédia inteligente é vida! "Brooklyn Nine-Nine" (série) tem humor rápido e personagens ótimos. Para filmes, "The Grand Budapest Hotel" é visualmente lindo e engraçado.',
-    };
-    
-    // Simple keyword matching
+    // Enhanced fallback responses with much better keyword coverage
     final lowerQuery = query.toLowerCase();
-    for (final key in fallbacks.keys) {
-      if (lowerQuery.contains(key)) {
-        return fallbacks[key]!;
-      }
+    
+    // Action/Adventure
+    if (lowerQuery.contains('acao') || lowerQuery.contains('ação') || 
+        lowerQuery.contains('aventura') || lowerQuery.contains('john wick') ||
+        lowerQuery.contains('fast') || lowerQuery.contains('mission')) {
+      return '💥 Ação na veia! Se curte adrenalina, recomendo "Mad Max: Fury Road" (ação pura), "John Wick" (coreografias incríveis) e "Mission Impossible" (stunts insanos). Que tipo de ação você prefere - mais realista ou mais fantasia?';
     }
     
-    return '🎬 Que pergunta interessante! Baseado no que você está procurando, encontrei algumas opções que combinam perfeitamente com seu gosto. Nossa IA analisou milhões de filmes para trazer essas recomendações personalizadas para você!';
+    // Sci-Fi
+    if (lowerQuery.contains('inception') || lowerQuery.contains('matrix') || 
+        lowerQuery.contains('ficção') || lowerQuery.contains('sci-fi') ||
+        lowerQuery.contains('futuro') || lowerQuery.contains('aliens')) {
+      return '🚀 Ficção científica é vida! "Blade Runner 2049" é visualmente deslumbrante, "Arrival" mexe com a mente, e "Ex Machina" questiona nossa relação com IA. Quer algo mais cerebral ou com mais ação?';
+    }
+    
+    // Romance
+    if (lowerQuery.contains('romantico') || lowerQuery.contains('romântico') || 
+        lowerQuery.contains('romance') || lowerQuery.contains('amor') ||
+        lowerQuery.contains('piegas') || lowerQuery.contains('casal')) {
+      return '💕 Romance inteligente chegando! "Her" é poético e futurístico, "Eternal Sunshine" brinca com memórias do amor, "(500) Days of Summer" quebra clichês. Prefere mais drama ou comédia romântica?';
+    }
+    
+    // Horror/Terror
+    if (lowerQuery.contains('terror') || lowerQuery.contains('horror') || 
+        lowerQuery.contains('medo') || lowerQuery.contains('assombra') ||
+        lowerQuery.contains('suspense') || lowerQuery.contains('psicológico')) {
+      return '😱 Terror de qualidade! "Hereditary" é perturbador, "Get Out" mistura terror com crítica social, "The Witch" é atmosférico. Curte mais gore ou terror psicológico?';
+    }
+    
+    // Comedy
+    if (lowerQuery.contains('comedia') || lowerQuery.contains('comédia') || 
+        lowerQuery.contains('engracado') || lowerQuery.contains('rir') ||
+        lowerQuery.contains('humor') || lowerQuery.contains('funny')) {
+      return '😂 Comédia boa é remédio! "The Grand Budapest Hotel" é visualmente lindo e hilário, "Knives Out" mistura comédia com mistério, "What We Do in the Shadows" é comédia vampiresca genial!';
+    }
+    
+    // Drama
+    if (lowerQuery.contains('drama') || lowerQuery.contains('emociona') || 
+        lowerQuery.contains('chora') || lowerQuery.contains('profundo') ||
+        lowerQuery.contains('tocante') || lowerQuery.contains('história')) {
+      return '🎭 Drama que emociona! "Moonlight" é uma obra-prima sobre identidade, "Parasite" critica social brilhante, "Manchester by the Sea" vai te deixar pensativo. Quer algo mais pesado ou esperançoso?';
+    }
+    
+    // Animation
+    if (lowerQuery.contains('anima') || lowerQuery.contains('pixar') || 
+        lowerQuery.contains('disney') || lowerQuery.contains('desenho') ||
+        lowerQuery.contains('família') || lowerQuery.contains('criança')) {
+      return '🎨 Animação que emociona adultos! "Spider-Verse" revolucionou a animação, "Soul" da Pixar é profundo, "Your Name" é lindo demais. Para toda família ou mais adulto?';
+    }
+    
+    // Specific movies mentioned
+    if (lowerQuery.contains('black mirror')) {
+      return '📱 Entendi o vibe Black Mirror! Quer algo que mexe com tecnologia e sociedade. "Ex Machina" questiona IA, "Her" explora amor digital, "Minority Report" mostra vigilância futurística. Que aspecto te interessa mais?';
+    }
+    
+    // Netflix/Streaming
+    if (lowerQuery.contains('netflix') || lowerQuery.contains('prime') || 
+        lowerQuery.contains('streaming') || lowerQuery.contains('plataforma')) {
+      return '📺 Olha só! Não consigo verificar disponibilidade em tempo real, mas posso recomendar ótimos títulos. Me conta que gênero ou humor você está buscando que eu indico os melhores!';
+    }
+    
+    // Generic but much better than before
+    return '🎬 Interessante! Para dar a recomendação perfeita, me conta: que gênero te anima mais agora? Ação, drama, comédia, terror? Ou tem algum filme que você curtiu recentemente que eu posso usar de referência?';
   }
   
   void dispose() {
