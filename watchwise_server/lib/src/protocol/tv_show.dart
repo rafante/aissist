@@ -1,7 +1,7 @@
 import 'package:serverpod/serverpod.dart';
 
 /// Represents a TV show from TMDB
-class TvShow extends SerializableModel {
+class TvShow {
   TvShow({
     required this.id,
     required this.name,
@@ -57,7 +57,6 @@ class TvShow extends SerializableModel {
   /// Origin country codes
   List<String> originCountry;
 
-  @override
   Map<String, dynamic> toJson() => {
     'id': id,
     'name': name,

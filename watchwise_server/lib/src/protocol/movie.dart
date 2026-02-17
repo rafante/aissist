@@ -1,7 +1,7 @@
 import 'package:serverpod/serverpod.dart';
 
 /// Represents a movie from TMDB
-class Movie extends SerializableModel {
+class Movie {
   Movie({
     required this.id,
     required this.title,
@@ -57,7 +57,6 @@ class Movie extends SerializableModel {
   /// List of genre IDs
   List<int> genreIds;
 
-  @override
   Map<String, dynamic> toJson() => {
     'id': id,
     'title': title,
