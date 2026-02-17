@@ -1,6 +1,4 @@
-import 'package:serverpod/serverpod.dart';
-
-/// Represents a TV show from TMDB
+/// Represents a TV show from TMDB (standalone class)
 class TvShow {
   TvShow({
     required this.id,

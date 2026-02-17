@@ -16,8 +16,8 @@ RUN dart pub get --verbose
 # Copy all source code
 COPY . .
 
-# Compile the application
-RUN dart compile exe bin/main.dart -o bin/server
+# Compile the simple application (avoiding Serverpod complexity for now)
+RUN dart compile exe bin/simple_main.dart -o bin/server
 
 # Expose port
 EXPOSE 8080

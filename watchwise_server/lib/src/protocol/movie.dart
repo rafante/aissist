@@ -1,6 +1,4 @@
-import 'package:serverpod/serverpod.dart';
-
-/// Represents a movie from TMDB
+/// Represents a movie from TMDB (standalone class)
 class Movie {
   Movie({
     required this.id,
