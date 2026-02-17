@@ -8,7 +8,8 @@ environment:
 
 dependencies:
   serverpod: 3.3.1
-  serverpod_auth_idp_server: 3.3.1
+  # TEMPORARILY DISABLED for initial deployment
+  # serverpod_auth_idp_server: 3.3.1
   http: ^1.6.0
 
 dev_dependencies:
