@@ -373,9 +373,34 @@
                     <a href="#" class="btn-primary">
                         🚀 Começar Grátis
                     </a>
-                    <a href="#" class="btn-secondary">
-                        ▶️ Ver Demo
-                    </a>
+                    <button id="try-ai-btn" class="btn-secondary">
+                        🤖 Testar IA Agora
+                    </button>
+                </div>
+                
+                <!-- AI Chat Interface (initially hidden) -->
+                <div id="ai-chat-interface" style="display: none; margin-top: 32px;">
+                    <div style="background: rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 20px; border: 1px solid rgba(255, 255, 255, 0.2);">
+                        <div style="display: flex; gap: 12px;">
+                            <input type="text" id="ai-input" placeholder="Ex: Filmes como Inception mas menos confuso..." 
+                                style="flex: 1; padding: 12px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white; font-size: 16px;" />
+                            <button id="ai-send-btn" class="btn-primary" style="padding: 12px 20px;">
+                                Enviar
+                            </button>
+                        </div>
+                        <div id="ai-response" style="margin-top: 16px; display: none;">
+                            <div style="background: rgba(102, 126, 234, 0.1); border-radius: 12px; padding: 16px; border-left: 4px solid #667eea;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                    <span style="color: #667eea;">🤖 AIssist IA</span>
+                                </div>
+                                <div id="ai-response-text" style="color: white; line-height: 1.6;"></div>
+                            </div>
+                            <div id="ai-suggestions" style="margin-top: 16px;"></div>
+                        </div>
+                        <div id="ai-loading" style="display: none; text-align: center; margin-top: 16px;">
+                            <span style="color: rgba(255,255,255,0.7);">🧠 IA pensando...</span>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -517,10 +542,97 @@
             cycle();
         }
 
-        // Initialize animations
+        // AI Chat functionality
+        async function testAI() {
+            const input = document.getElementById('ai-input');
+            const query = input.value.trim();
+            
+            if (!query) {
+                alert('Digite sua pergunta sobre filmes!');
+                return;
+            }
+            
+            const loading = document.getElementById('ai-loading');
+            const response = document.getElementById('ai-response');
+            const responseText = document.getElementById('ai-response-text');
+            const suggestions = document.getElementById('ai-suggestions');
+            
+            // Show loading
+            loading.style.display = 'block';
+            response.style.display = 'none';
+            
+            try {
+                const result = await fetch('/ai/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query })
+                });
+                
+                const data = await result.json();
+                
+                if (data.success) {
+                    // Show AI response
+                    responseText.textContent = data.ai_response;
+                    
+                    // Show movie suggestions if available
+                    if (data.movie_suggestions && data.movie_suggestions.length > 0) {
+                        suggestions.innerHTML = '<h4 style="color: white; margin-bottom: 12px;">🎬 Filmes encontrados:</h4>';
+                        data.movie_suggestions.forEach(movie => {
+                            const movieCard = document.createElement('div');
+                            movieCard.style.cssText = 'background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px; margin-bottom: 8px; border-left: 3px solid #f59e0b;';
+                            movieCard.innerHTML = `
+                                <div style="color: white; font-weight: 600;">${movie.title} (${movie.release_date?.split('-')[0] || 'N/A'})</div>
+                                <div style="color: rgba(255,255,255,0.7); font-size: 14px; margin-top: 4px;">⭐ ${movie.vote_average?.toFixed(1) || 'N/A'}</div>
+                            `;
+                            suggestions.appendChild(movieCard);
+                        });
+                    } else {
+                        suggestions.innerHTML = '';
+                    }
+                    
+                    response.style.display = 'block';
+                } else {
+                    responseText.textContent = '❌ Erro: ' + (data.error || 'Falha na comunicação com a IA');
+                    response.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('AI Error:', error);
+                responseText.textContent = '❌ Erro de conexão. A IA pode estar temporariamente indisponível.';
+                response.style.display = 'block';
+            }
+            
+            loading.style.display = 'none';
+            input.value = '';
+        }
+
+        // Initialize animations and events
         document.addEventListener('DOMContentLoaded', () => {
             createParticles();
             setTimeout(startTypingAnimation, 1000);
+            
+            // AI chat events
+            const tryAIBtn = document.getElementById('try-ai-btn');
+            const aiInterface = document.getElementById('ai-chat-interface');
+            const aiInput = document.getElementById('ai-input');
+            const aiSendBtn = document.getElementById('ai-send-btn');
+            
+            tryAIBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                aiInterface.style.display = aiInterface.style.display === 'none' ? 'block' : 'none';
+                if (aiInterface.style.display === 'block') {
+                    aiInput.focus();
+                }
+            });
+            
+            aiSendBtn.addEventListener('click', testAI);
+            
+            aiInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    testAI();
+                }
+            });
         });
     </script>
 </body>

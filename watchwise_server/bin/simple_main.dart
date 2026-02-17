@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:convert';
 import '../lib/src/services/tmdb_service.dart';
+import '../lib/src/services/reviva_llm_service.dart';
 
 /// Ultra-simple HTTP server for AIssist MVP
 Future<void> main() async {
@@ -9,6 +10,9 @@ Future<void> main() async {
   // Get TMDB API key
   const apiKey = String.fromEnvironment('TMDB_API_KEY', defaultValue: '466fd9ba21e369cd51e7743d32b7833f');
   final tmdb = TmdbService(apiKey: apiKey);
+  
+  // Initialize Reviva LLM service
+  final llmService = RevivaLLMService();
   
   // Create HTTP server  
   final port = int.fromEnvironment('PORT', defaultValue: 8081);
@@ -20,6 +24,17 @@ Future<void> main() async {
     final query = request.uri.queryParameters;
     
     try {
+      // Handle CORS preflight
+      if (request.method == 'OPTIONS') {
+        request.response
+          ..headers.add('Access-Control-Allow-Origin', '*')
+          ..headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+          ..headers.add('Access-Control-Allow-Headers', 'Content-Type')
+          ..statusCode = 200;
+        await request.response.close();
+        return;
+      }
+      
       switch (path) {
         case '/health':
           await _handleHealth(request);
@@ -36,6 +51,9 @@ Future<void> main() async {
         case '/demo.html':
         case '/demo':
           await _handleDemo(request);
+          break;
+        case '/ai/chat':
+          await _handleAIChat(request, tmdb, llmService, query);
           break;
         default:
           await _handle404(request);
@@ -58,6 +76,7 @@ Future<void> _handleHealth(HttpRequest request) async {
         '/movies/popular',
         '/movies/search?query=Matrix',
         '/tv/search?query=Friends',
+        '/ai/chat (POST)',
         '/demo.html'
       ]
     }));
@@ -143,6 +162,76 @@ Future<void> _handleSearchTV(HttpRequest request, TmdbService tmdb, Map<String, 
       'total_results': shows.length
     }));
   await request.response.close();
+}
+
+Future<void> _handleAIChat(HttpRequest request, TmdbService tmdb, RevivaLLMService llmService, Map<String, String> query) async {
+  if (request.method != 'POST') {
+    request.response
+      ..statusCode = 405
+      ..headers.contentType = ContentType.json
+      ..write(jsonEncode({'error': 'Method not allowed. Use POST.'}));
+    await request.response.close();
+    return;
+  }
+  
+  try {
+    final body = await utf8.decoder.bind(request).join();
+    final data = jsonDecode(body) as Map<String, dynamic>;
+    
+    final userQuery = data['query'] as String?;
+    if (userQuery == null || userQuery.trim().isEmpty) {
+      request.response
+        ..statusCode = 400
+        ..headers.contentType = ContentType.json
+        ..write(jsonEncode({'error': 'query field required'}));
+      await request.response.close();
+      return;
+    }
+    
+    // Search for movies related to the query to give AI context
+    List<Map<String, dynamic>> movieContext = [];
+    try {
+      final movies = await tmdb.searchMovies(
+        query: userQuery,
+        page: 1,
+        language: 'pt-BR',
+      );
+      movieContext = movies.take(5).map((m) => m.toJson()).toList();
+    } catch (e) {
+      print('⚠️ Could not fetch movie context: $e');
+    }
+    
+    // Generate AI response
+    final aiResponse = await llmService.generateMovieRecommendation(
+      userQuery: userQuery,
+      movieContext: movieContext,
+    );
+    
+    request.response
+      ..headers.contentType = ContentType.json
+      ..headers.add('Access-Control-Allow-Origin', '*')
+      ..headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+      ..headers.add('Access-Control-Allow-Headers', 'Content-Type')
+      ..write(jsonEncode({
+        'success': true,
+        'query': userQuery,
+        'ai_response': aiResponse,
+        'movie_suggestions': movieContext,
+        'timestamp': DateTime.now().toIso8601String(),
+      }));
+    await request.response.close();
+    
+  } catch (e) {
+    print('❌ Error in AI chat: $e');
+    request.response
+      ..statusCode = 500
+      ..headers.contentType = ContentType.json
+      ..write(jsonEncode({
+        'error': 'Failed to generate AI response',
+        'message': e.toString()
+      }));
+    await request.response.close();
+  }
 }
 
 Future<void> _handleDemo(HttpRequest request) async {
