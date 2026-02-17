@@ -19,6 +19,11 @@ services:
       SERVERPOD_PASSWORD_redis: hRTeXLSLqSx0VPI0IL0b5nUbKKDntbfq
       # Run in development mode for Docker
       SERVERPOD_MODE: development
+      # Authentication secrets (from development config)
+      SERVERPOD_PASSWORD_serviceSecret: WVzfX_QhM3XnfmRLR4Jc1wPQnfAD9UIS
+      SERVERPOD_PASSWORD_emailSecretHashPepper: o_JjXG2koScai62i5V61R6sL6NpLSvhL
+      SERVERPOD_PASSWORD_jwtHmacSha512PrivateKey: IByfmMPd_5oa0C643Saqr6t_VBf8QuuA
+      SERVERPOD_PASSWORD_jwtRefreshTokenHashPepper: LJJIDuOHEsaW3PhNe726N40g1sq1PvI0
       # Custom app variables
       TMDB_API_KEY: 466fd9ba21e369cd51e7743d32b7833f
     healthcheck:
