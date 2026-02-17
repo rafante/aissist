@@ -1,39 +1,38 @@
-# Build stage
-FROM dart:3.8.0 AS build
+# Use official Dart runtime as base image
+FROM dart:3.11.0
+
+# Install curl for healthcheck
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
 WORKDIR /app
+
+# Copy pubspec files
+COPY pubspec.yaml ./
+COPY pubspec.lock ./
+
+# Install dependencies
+RUN dart pub get
+
+# Copy source code
 COPY . .
 
-# Install dependencies and compile the server executable
-RUN dart pub get
+# Compile the application
 RUN dart compile exe bin/main.dart -o bin/server
 
-# Final stage
-FROM alpine:latest
-
-# Environment variables
-ENV runmode=production
-ENV serverid=default
-ENV logging=normal
-ENV role=monolith
-
-# Copy runtime dependencies
-COPY --from=build /runtime/ /
-
-# Copy compiled server executable
-COPY --from=build /app/bin/server server
-
-# Copy configuration files and resources
-COPY --from=build /app/config/ config/
-COPY --from=build /app/web/ web/
-COPY --from=build /app/migrations/ migrations/
-
-# This file is required to enable the endpoint log filter in Insights.
-COPY --from=build /app/lib/src/generated/protocol.yaml lib/src/generated/protocol.yaml
-
-# Expose ports
+# Expose port
 EXPOSE 8080
-EXPOSE 8081
-EXPOSE 8082
 
-# Define the entrypoint command
-ENTRYPOINT ./server --mode=$runmode --server-id=$serverid --logging=$logging --role=$role
+# Set environment variables
+ENV POSTGRES_HOST=postgres
+ENV POSTGRES_PORT=5432
+ENV POSTGRES_DB=watchwise
+ENV POSTGRES_USER=postgres
+ENV POSTGRES_PASSWORD=5DSV-jq2bDFrY7oUFXvksaRamSiyJ8nO
+ENV REDIS_HOST=redis
+ENV REDIS_PORT=6379
+ENV REDIS_PASSWORD=hRTeXLSLqSx0VPI0IL0b5nUbKKDntbfq
+ENV TMDB_API_KEY=466fd9ba21e369cd51e7743d32b7833f
+
+# Run the application
+CMD ["./bin/server"]
