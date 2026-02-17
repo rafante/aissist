@@ -65,12 +65,13 @@ flutter run -d web-server --web-port 8080
 
 ## 📋 MVP Roadmap (8 semanas)
 
-### ✅ **Semana 1-2: Fundação (ATUAL)**
+### ✅ **Semana 1-2: Fundação (95% COMPLETA)**
 - [x] ✅ Setup Serverpod + PostgreSQL + Redis
-- [x] ✅ Integração TMDB API base 
+- [x] ✅ Integração TMDB API 100% TESTADA E FUNCIONANDO
 - [x] ✅ Estrutura de projeto criada
-- [ ] 🔄 Sistema básico de usuários
-- [ ] 🔄 Interface Flutter base
+- [x] ✅ Models (Movie, TvShow) + Service + Endpoints
+- [ ] 🔄 Sistema básico de usuários (próximo)
+- [ ] 🔄 Interface Flutter base (próximo)
 
 ### ⏳ **Semana 3-4: Core Features**
 - [ ] Chat conversacional básico (OpenAI integration)
@@ -173,7 +174,13 @@ cd watchwise_server && dart test
 
 ---
 
-**Status Atual**: 🔧 Fundação completa - Iniciando desenvolvimento MVP  
+**Status Atual**: 🎬 TMDB 100% + Serverpod pronto - Iniciando sistema de usuários
 **Team**: Bruno Rafante (PO) + Maia (CTO/Dev/PM)  
 **Timeline**: MVP em 6 semanas restantes  
-**Próximo**: Implementar sistema de usuários + TMDB integration
+**Próximo**: Sistema de usuários + Interface Flutter básica
+
+**🎉 MARCOS ATINGIDOS:**
+- ✅ Ambiente técnico 100% funcional
+- ✅ TMDB API testada e integrada 
+- ✅ Backend Serverpod estruturado
+- ✅ Modelos de dados prontos
