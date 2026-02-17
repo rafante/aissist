@@ -1,37 +1,26 @@
 import 'dart:io';
 import 'package:serverpod/serverpod.dart';
-import 'src/minimal_endpoints.dart';
 import 'src/generated/protocol.dart';
+import 'src/generated/endpoints_clean.dart';
 
-/// Minimal Serverpod server for AIssist MVP
+/// Serverpod server for AIssist
 void run(List<String> args) async {
-  // Initialize Serverpod with minimal configuration
-  final pod = Serverpod(
-    args,
-    Protocol(),
-    MinimalEndpoints(),
-  );
+  // Initialize Serverpod with clean endpoints (no auth dependencies)
+  final pod = Serverpod(args, Protocol(), CleanEndpoints());
 
-  // Setup basic routes
+  // Setup a default page at the web root
+  pod.webServer.addRoute(RootRoute(), '/');
+  pod.webServer.addRoute(RootRoute(), '/index.html');
+
+  // Serve all files in the web/static directory 
   final root = Directory(Uri(path: 'web/static').toFilePath());
-  if (root.existsSync()) {
-    pod.webServer.addRoute(StaticRoute.directory(root), '/');
-  }
-
-  // Add health check
-  pod.webServer.addRoute(
-    StaticRoute.json({'status': 'healthy', 'service': 'AIssist API v1.0'}),
-    '/health',
-  );
+  pod.webServer.addRoute(StaticRoute.directory(root));
 
   print('🎬 AIssist API Server starting...');
-  print('📋 Available endpoints:');
-  print('   GET  /health - Health check');
-  print('   POST /content/searchMovies - Search movies via TMDB');
-  print('   POST /content/getPopularMovies - Get popular movies');
+  print('📋 Available endpoints: /greeting/hello');
   
   // Start the server
   await pod.start();
   
-  print('🚀 AIssist API Server running on port 8080');
+  print('🚀 AIssist API running on port 8080!');
 }

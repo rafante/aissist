@@ -9,8 +9,8 @@ class ContentEndpoint extends Endpoint {
 
   @override
   Future<void> initialize() async {
-    final apiKey = session.serverpod.getPassword('TMDB_API_KEY') ?? 
-                   const String.fromEnvironment('TMDB_API_KEY', defaultValue: '466fd9ba21e369cd51e7743d32b7833f');
+    // Get TMDB API key from environment variable
+    const apiKey = String.fromEnvironment('TMDB_API_KEY', defaultValue: '466fd9ba21e369cd51e7743d32b7833f');
     
     if (apiKey.isEmpty) {
       throw Exception('TMDB_API_KEY not configured');
