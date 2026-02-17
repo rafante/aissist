@@ -33,6 +33,10 @@ Future<void> main() async {
         case '/tv/search':
           await _handleSearchTV(request, tmdb, query);
           break;
+        case '/demo.html':
+        case '/demo':
+          await _handleDemo(request);
+          break;
         default:
           await _handle404(request);
       }
@@ -53,7 +57,8 @@ Future<void> _handleHealth(HttpRequest request) async {
         '/health',
         '/movies/popular',
         '/movies/search?query=Matrix',
-        '/tv/search?query=Friends'
+        '/tv/search?query=Friends',
+        '/demo.html'
       ]
     }));
   await request.response.close();
@@ -138,6 +143,25 @@ Future<void> _handleSearchTV(HttpRequest request, TmdbService tmdb, Map<String, 
       'total_results': shows.length
     }));
   await request.response.close();
+}
+
+Future<void> _handleDemo(HttpRequest request) async {
+  try {
+    final demoFile = File('web/static/demo.html');
+    final htmlContent = await demoFile.readAsString();
+    
+    request.response
+      ..headers.contentType = ContentType.html
+      ..write(htmlContent);
+    await request.response.close();
+  } catch (e) {
+    print('❌ Error serving demo.html: $e');
+    request.response
+      ..statusCode = 500
+      ..headers.contentType = ContentType.json
+      ..write(jsonEncode({'error': 'Could not load demo page'}));
+    await request.response.close();
+  }
 }
 
 Future<void> _handle404(HttpRequest request) async {
