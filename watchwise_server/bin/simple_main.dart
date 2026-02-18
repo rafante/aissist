@@ -5,7 +5,7 @@ import '../lib/src/services/reviva_llm_service.dart';
 
 /// Ultra-simple HTTP server for AIssist MVP
 Future<void> main() async {
-  print('🎬 Starting AIssist Simple API Server...');
+  print('🎬 Starting AIssist Complete Navigation System...');
   
   // Get TMDB API key
   const apiKey = String.fromEnvironment('TMDB_API_KEY', defaultValue: '466fd9ba21e369cd51e7743d32b7833f');
