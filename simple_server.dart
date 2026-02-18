@@ -35,7 +35,10 @@ Future<void> handleRequest(HttpRequest request) async {
         await serveFile(request, 'watchwise_server/web/static/admin.html');
         break;
       case '/demo':
-        await serveFile(request, 'watchwise_server/web/static/demo.html');
+        await serveFile(request, 'watchwise_server/web/static/demo-visual.html');
+        break;
+      case '/demo-visual':
+        await serveFile(request, 'watchwise_server/web/static/demo-visual.html');
         break;
       case '/ai/status':
         await handleAiStatus(request);
