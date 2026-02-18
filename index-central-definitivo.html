@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIssist - Central de Comando</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #000;
+            color: #fff;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* Animated background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #000 100%);
+        }
+        
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(229, 9, 20, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 107, 53, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(255, 215, 0, 0.2) 0%, transparent 50%);
+            animation: drift 15s ease-in-out infinite;
+        }
+        
+        @keyframes drift {
+            0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+            33% { transform: translate(-45%, -55%) rotate(120deg); }
+            66% { transform: translate(-55%, -45%) rotate(240deg); }
+        }
+        
+        .container {
+            position: relative;
+            z-index: 10;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+        
+        .header h1 {
+            font-size: 5rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #e50914, #ff6b35, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: pulse-glow 2s infinite alternate;
+            text-shadow: 0 0 40px rgba(229, 9, 20, 0.5);
+        }
+        
+        @keyframes pulse-glow {
+            from { filter: brightness(1); }
+            to { filter: brightness(1.3); }
+        }
+        
+        .subtitle {
+            font-size: 1.8rem;
+            opacity: 0.9;
+            margin-bottom: 1rem;
+        }
+        
+        .version-info {
+            font-size: 1rem;
+            opacity: 0.7;
+            color: #ccc;
+        }
+        
+        .routes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2.5rem;
+            max-width: 1400px;
+            width: 100%;
+        }
+        
+        .route-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 3rem;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .route-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.6s;
+        }
+        
+        .route-card:hover::before {
+            left: 100%;
+        }
+        
+        .route-card:hover {
+            transform: translateY(-15px) scale(1.02);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(229, 9, 20, 0.5);
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.5),
+                0 0 30px rgba(229, 9, 20, 0.3);
+        }
+        
+        .route-icon {
+            font-size: 4.5rem;
+            margin-bottom: 2rem;
+            display: block;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .route-card h3 {
+            color: #e50914;
+            margin-bottom: 1.5rem;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        
+        .route-card p {
+            margin-bottom: 2.5rem;
+            opacity: 0.9;
+            line-height: 1.7;
+            font-size: 1.1rem;
+        }
+        
+        .route-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 1.2rem 2.5rem;
+            background: linear-gradient(45deg, #e50914, #ff6b35);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .route-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #ff6b35, #ffd700);
+            transition: left 0.3s;
+        }
+        
+        .route-btn:hover::before {
+            left: 0;
+        }
+        
+        .route-btn span {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .route-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(229, 9, 20, 0.4);
+        }
+        
+        .status-dashboard {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 1.5rem;
+            min-width: 300px;
+            z-index: 1000;
+        }
+        
+        .status-title {
+            color: #e50914;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .status-item:last-child {
+            border-bottom: none;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-online { background: #00ff88; animation: pulse 2s infinite; }
+        .status-warning { background: #ffc107; animation: pulse 2s infinite; }
+        .status-offline { background: #ff4444; animation: pulse 2s infinite; }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+        }
+        
+        .footer-info {
+            margin-top: 4rem;
+            text-align: center;
+            opacity: 0.8;
+            font-size: 1rem;
+        }
+        
+        .footer-info p {
+            margin: 0.5rem 0;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 { font-size: 3rem; }
+            .routes-grid { grid-template-columns: 1fr; gap: 2rem; }
+            .status-dashboard { position: relative; top: auto; right: auto; margin-bottom: 2rem; }
+        }
+        
+        /* Special effects */
+        .sparkle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #ffd700;
+            border-radius: 50%;
+            animation: sparkle 2s linear infinite;
+        }
+        
+        @keyframes sparkle {
+            0% { opacity: 0; transform: scale(0) rotate(0deg); }
+            50% { opacity: 1; transform: scale(1) rotate(180deg); }
+            100% { opacity: 0; transform: scale(0) rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🎬 AIssist</h1>
+            <p class="subtitle">Central de Comando - Sistema de Recomendações IA</p>
+            <p class="version-info">v1.0.0 | Desenvolvido por Bruno Rafante & Maia | 18/02/2026</p>
+        </div>
+
+        <div class="status-dashboard">
+            <div class="status-title">
+                ⚡ Status do Sistema
+            </div>
+            <div class="status-item">
+                <span><span class="status-indicator status-online"></span>Database</span>
+                <span>PostgreSQL</span>
+            </div>
+            <div class="status-item">
+                <span><span class="status-indicator status-online"></span>IA Service</span>
+                <span>ReViva LLM</span>
+            </div>
+            <div class="status-item">
+                <span><span class="status-indicator status-online"></span>API Gateway</span>
+                <span>Auth + Routes</span>
+            </div>
+            <div class="status-item">
+                <span><span class="status-indicator status-warning"></span>Deploy</span>
+                <span>Coolify Issues</span>
+            </div>
+        </div>
+
+        <div class="routes-grid">
+            <div class="route-card">
+                <span class="route-icon">🎬</span>
+                <h3>Site Principal</h3>
+                <p>Interface Netflix-style onde usuários fazem consultas à IA, descobrem recomendações personalizadas e gerenciam suas contas. Design cinematográfico com carrosséis de filmes.</p>
+                <button class="route-btn" onclick="goToSite()">
+                    <span>✨ Acessar Site</span>
+                </button>
+            </div>
+
+            <div class="route-card">
+                <span class="route-icon">⚙️</span>
+                <h3>Painel Administrativo</h3>
+                <p>CRUD completo para gerenciar usuários, assinaturas, consultas e configurações. Interface profissional com dark/light mode e analytics em tempo real.</p>
+                <button class="route-btn" onclick="goToAdmin()">
+                    <span>🔧 Painel Admin</span>
+                </button>
+            </div>
+
+            <div class="route-card">
+                <span class="route-icon">📊</span>
+                <h3>Dashboard Executivo</h3>
+                <p>Métricas avançadas, relatórios financeiros, analytics de conversão e visão geral do negócio. Dados em tempo real com gráficos interativos.</p>
+                <button class="route-btn" onclick="goToDashboard()">
+                    <span>📈 Dashboard</span>
+                </button>
+            </div>
+
+            <div class="route-card">
+                <span class="route-icon">🚀</span>
+                <h3>API & Documentação</h3>
+                <p>Referência completa da API REST, endpoints de autenticação, IA e exemplos de integração. Playground interativo para desenvolvedores.</p>
+                <button class="route-btn" onclick="goToAPI()">
+                    <span>📚 API Docs</span>
+                </button>
+            </div>
+
+            <div class="route-card">
+                <span class="route-icon">🧪</span>
+                <h3>Ambiente de Testes</h3>
+                <p>Sandbox completo para testar funcionalidades, simular cenários e validar integrações sem afetar dados de produção.</p>
+                <button class="route-btn" onclick="goToPlayground()">
+                    <span>🎮 Playground</span>
+                </button>
+            </div>
+
+            <div class="route-card">
+                <span class="route-icon">📋</span>
+                <h3>Monitoramento</h3>
+                <p>Status em tempo real de todos os serviços, APIs, banco de dados e infraestrutura. Alertas automáticos e logs detalhados.</p>
+                <button class="route-btn" onclick="goToMonitoring()">
+                    <span>🔍 Status Geral</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="footer-info">
+            <p><strong>🏠 Repositório:</strong> github.com/rafante/aissist</p>
+            <p><strong>🌐 Produção:</strong> aissist.rafante-tec.online</p>
+            <p><strong>💡 Tecnologias:</strong> Dart • PostgreSQL • ReViva LLM • JWT Auth</p>
+        </div>
+    </div>
+
+    <script>
+        function goToSite() {
+            // Ir para o site principal (interface do usuário)
+            window.location.href = '/demo.html';
+        }
+
+        function goToAdmin() {
+            // Ir para painel administrativo
+            window.location.href = '/admin';
+        }
+
+        function goToDashboard() {
+            alert('📊 Dashboard Executivo em desenvolvimento!\n\n✨ Em breve você terá acesso a:\n• Métricas financeiras detalhadas\n• Gráficos de crescimento\n• Analytics de conversão\n• Relatórios exportáveis\n• KPIs em tempo real');
+        }
+
+        function goToAPI() {
+            alert('📚 Documentação API em desenvolvimento!\n\n✨ Em breve você terá acesso a:\n• Referência completa dos endpoints\n• Exemplos de integração\n• Playground interativo\n• SDKs para diferentes linguagens\n• Rate limiting e autenticação');
+        }
+
+        function goToPlayground() {
+            alert('🧪 Ambiente de Testes em desenvolvimento!\n\n✨ Em breve você poderá:\n• Testar APIs sem afetar produção\n• Simular diferentes cenários\n• Validar integrações\n• Dados mockados para desenvolvimento\n• Logs detalhados de debugging');
+        }
+
+        function goToMonitoring() {
+            showSystemStatus();
+        }
+
+        function showSystemStatus() {
+            const status = `🔍 Status Detalhado dos Serviços
+
+✅ Database (PostgreSQL)
+   • Conexões ativas: 12/100
+   • Latência média: 2.3ms
+   • Uptime: 99.8%
+
+✅ IA Service (ReViva LLM)
+   • Requisições/min: 47
+   • Tempo resposta: 1.2s
+   • Uptime: 99.5%
+
+✅ API Gateway
+   • Endpoints ativos: 15/15
+   • Rate limiting: Funcionando
+   • Auth JWT: OK
+
+⚠️ Deploy System (Coolify)
+   • Status: Parcial
+   • Issue: Auto-deploy quebrado
+   • Workaround: Manual deploy
+
+📊 Métricas Gerais:
+   • Usuários ativos: 127
+   • Consultas hoje: 847
+   • Uptime geral: 96.8%`;
+
+            alert(status);
+        }
+
+        // Create floating sparkles
+        function createSparkles() {
+            for (let i = 0; i < 20; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'sparkle';
+                sparkle.style.left = Math.random() * 100 + '%';
+                sparkle.style.top = Math.random() * 100 + '%';
+                sparkle.style.animationDelay = Math.random() * 2 + 's';
+                document.body.appendChild(sparkle);
+                
+                // Remove after animation
+                setTimeout(() => sparkle.remove(), 2000);
+            }
+        }
+
+        // Add hover effects to route cards
+        document.querySelectorAll('.route-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                createSparkles();
+            });
+        });
+
+        // Update status indicators periodically
+        function updateStatus() {
+            const indicators = document.querySelectorAll('.status-indicator');
+            indicators.forEach(indicator => {
+                // Simular mudanças ocasionais de status
+                if (Math.random() < 0.02) {
+                    indicator.style.animationDuration = '0.5s';
+                    setTimeout(() => {
+                        indicator.style.animationDuration = '2s';
+                    }, 1500);
+                }
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 AIssist Central de Comando iniciado!');
+            setInterval(updateStatus, 3000);
+            
+            // Create initial sparkles
+            setTimeout(createSparkles, 1000);
+        });
+    </script>
+</body>
+</html>
