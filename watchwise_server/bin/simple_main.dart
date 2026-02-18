@@ -37,6 +37,8 @@ Future<void> main() async {
       
       switch (path) {
         case '/':
+        case '/index':
+        case '/home':
           await _handleLandingPage(request);
           break;
         case '/login':

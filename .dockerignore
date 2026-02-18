@@ -1,0 +1,8 @@
+# Force rebuild by updating .dockerignore
+node_modules
+*.log
+.git
+test-deploy-local.js
+
+# Build timestamp to force cache invalidation
+# Updated: 2026-02-18-15:13:00
