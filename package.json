@@ -1,15 +1,20 @@
 {
-  "name": "aissist",
+  "name": "aissist-server",
   "version": "1.0.0",
-  "description": "AIssist - AI-powered movie and TV recommendations",
-  "main": "index.js",
+  "description": "AIssist Backend Server with Authentication",
+  "main": "simple-auth-server.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "node index.js"
+    "start": "node simple-auth-server.js",
+    "dev": "node simple-auth-server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=14.0.0"
   },
+  "keywords": ["ai", "movies", "tv", "recommendations"],
   "author": "Bruno Rafante",
   "license": "MIT"
 }

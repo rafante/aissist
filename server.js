@@ -1,200 +1,206 @@
-const http = require('http');
-const fs = require('fs');
+const express = require('express');
+const cors = require('cors');
 const path = require('path');
-const url = require('url');
-const { adminHTML } = require('./inline-admin');
 
-const port = process.env.PORT || 8080;
+const app = express();
+const PORT = process.env.PORT || 3030;
 
-// Serve static files
-function serveFile(res, filePath, contentType = 'text/html') {
-    fs.readFile(filePath, (err, content) => {
-        if (err) {
-            res.writeHead(404, {'Content-Type': 'text/plain'});
-            res.end('File not found');
-            return;
-        }
-        res.writeHead(200, {'Content-Type': contentType, 'Access-Control-Allow-Origin': '*'});
-        res.end(content);
-    });
-}
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.static('public'));
 
-// Mock AI service
-async function callAI(query) {
-    // Simulate API call to LLM
-    return `Baseado na sua consulta "${query}", aqui estão minhas recomendações:
-
-🎬 Filmes Recomendados:
-• Film 1 - Excelente para o gênero que você busca
-• Film 2 - Altamente avaliado pela crítica  
-• Film 3 - Popular entre usuários
-
-✨ Por que essas escolhas:
-Analisei seu perfil e estas opções combinam perfeitamente com suas preferências. Cada filme foi selecionado considerando qualidade, relevância e avaliações.
-
-📊 Confiança da recomendação: 95%
-🎯 Personalização aplicada: Sim
-⭐ Nota média dos filmes: 8.5/10`;
-}
-
-const server = http.createServer(async (req, res) => {
-    const parsedUrl = url.parse(req.url, true);
-    const pathname = parsedUrl.pathname;
-    
-    console.log(`${new Date().toISOString()} - ${req.method} ${pathname}`);
-    
-    // CORS headers
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    
-    if (req.method === 'OPTIONS') {
-        res.writeHead(200);
-        res.end();
-        return;
-    }
-
-    try {
-        switch (pathname) {
-            case '/':
-            case '/admin':
-                res.writeHead(200, {'Content-Type': 'text/html', 'Access-Control-Allow-Origin': '*'});
-                res.end(adminHTML);
-                break;
-                
-            case '/demo':
-            case '/demo.html':
-                serveFile(res, 'watchwise_server/web/static/demo-visual.html');
-                break;
-                
-            case '/health':
-                res.writeHead(200, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify({
-                    status: 'healthy',
-                    service: 'AIssist',
-                    timestamp: new Date().toISOString(),
-                    endpoints: ['/admin', '/demo', '/ai/chat', '/auth/login']
-                }));
-                break;
-                
-            case '/ai/status':
-                res.writeHead(200, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify({
-                    success: true,
-                    service: 'ReVivaLLM', 
-                    healthy: true,
-                    endpoint: 'llm.rafante-tec.online',
-                    model: 'reviva:latest',
-                    timestamp: new Date().toISOString()
-                }));
-                break;
-                
-            case '/ai/chat':
-                if (req.method === 'POST') {
-                    let body = '';
-                    req.on('data', chunk => body += chunk);
-                    req.on('end', async () => {
-                        try {
-                            const data = JSON.parse(body);
-                            const response = await callAI(data.query);
-                            
-                            res.writeHead(200, {'Content-Type': 'application/json'});
-                            res.end(JSON.stringify({
-                                success: true,
-                                response: response,
-                                query: data.query,
-                                processingTime: Math.random() * 2000 + 500,
-                                timestamp: new Date().toISOString()
-                            }));
-                        } catch (error) {
-                            res.writeHead(400, {'Content-Type': 'application/json'});
-                            res.end(JSON.stringify({success: false, error: 'Invalid JSON'}));
-                        }
-                    });
-                } else {
-                    res.writeHead(405, {'Content-Type': 'application/json'});
-                    res.end(JSON.stringify({error: 'Method not allowed'}));
-                }
-                break;
-                
-            case '/auth/login':
-                if (req.method === 'POST') {
-                    res.writeHead(200, {'Content-Type': 'application/json'});
-                    res.end(JSON.stringify({
-                        success: true,
-                        user: {
-                            id: 1,
-                            email: 'admin@aissist.com',
-                            subscriptionTier: 'pro',
-                            remainingQueries: 500
-                        },
-                        token: 'mock_admin_jwt_' + Date.now()
-                    }));
-                } else {
-                    res.writeHead(405);
-                    res.end('Method not allowed');
-                }
-                break;
-                
-            case '/auth/signup':
-                if (req.method === 'POST') {
-                    res.writeHead(200, {'Content-Type': 'application/json'});
-                    res.end(JSON.stringify({
-                        success: true,
-                        user: {
-                            id: Date.now(),
-                            email: 'user@aissist.com',
-                            subscriptionTier: 'free',
-                            remainingQueries: 5
-                        },
-                        token: 'mock_jwt_' + Date.now()
-                    }));
-                } else {
-                    res.writeHead(405);
-                    res.end('Method not allowed');
-                }
-                break;
-                
-            case '/movies/search':
-                const query = parsedUrl.query.query || 'action';
-                res.writeHead(200, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify({
-                    query: query,
-                    results: [
-                        {title: 'Movie 1', year: 2024, rating: 8.5},
-                        {title: 'Movie 2', year: 2023, rating: 7.8}
-                    ]
-                }));
-                break;
-                
-            case '/movies/popular':
-                res.writeHead(200, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify({
-                    results: [
-                        {title: 'Popular Movie 1', rating: 9.1},
-                        {title: 'Popular Movie 2', rating: 8.7}
-                    ]
-                }));
-                break;
-                
-            default:
-                res.writeHead(404, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify({
-                    error: 'Not found',
-                    available_endpoints: ['/admin', '/demo', '/ai/chat', '/auth/login', '/health']
-                }));
-        }
-    } catch (error) {
-        console.error('Server error:', error);
-        res.writeHead(500, {'Content-Type': 'application/json'});
-        res.end(JSON.stringify({error: 'Internal server error'}));
-    }
+// Logging middleware
+app.use((req, res, next) => {
+  console.log(`📡 ${req.method} ${req.path}`);
+  next();
 });
 
-server.listen(port, () => {
-    console.log(`🚀 AIssist Server running on port ${port}`);
-    console.log(`📊 Admin Dashboard: /admin`);
-    console.log(`🎬 Demo Page: /demo`);
-    console.log(`🤖 AI Chat: /ai/chat`);
-    console.log(`🔐 Auth: /auth/login, /auth/signup`);
+// Auth endpoints
+app.post('/auth/signup', (req, res) => {
+  const { email, password, planType } = req.body;
+  
+  console.log('✅ Signup:', { email, planType });
+  
+  res.json({
+    success: true,
+    user: {
+      id: Math.floor(Math.random() * 1000),
+      email: email,
+      subscriptionTier: planType || 'free',
+      remainingQueries: planType === 'pro' ? 500 : planType === 'premium' ? 100 : 5,
+      createdAt: new Date().toISOString()
+    },
+    token: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MTIzLCJlbWFpbCI6InRlc3RAdGVzdC5jb20ifQ.mock_token_' + Date.now(),
+    message: 'Conta criada com sucesso! Bem-vindo ao AIssist.'
+  });
+});
+
+app.post('/auth/login', (req, res) => {
+  const { email, password } = req.body;
+  
+  console.log('🔑 Login:', { email });
+  
+  res.json({
+    success: true,
+    user: {
+      id: 1,
+      email: email,
+      subscriptionTier: 'premium',
+      remainingQueries: 95,
+      lastLoginAt: new Date().toISOString()
+    },
+    token: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwiZW1haWwiOiJ0ZXN0QHRlc3QuY29tIn0.login_token_' + Date.now(),
+    message: 'Login realizado com sucesso!'
+  });
+});
+
+app.get('/auth/me', (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'Token não fornecido' });
+  }
+  
+  res.json({
+    success: true,
+    user: {
+      id: 1,
+      email: 'demo@aissist.com',
+      subscriptionTier: 'premium',
+      remainingQueries: 95,
+      totalQueries: 5,
+      createdAt: '2026-02-18T00:00:00Z',
+      lastLoginAt: new Date().toISOString()
+    }
+  });
+});
+
+app.get('/auth/usage', (req, res) => {
+  res.json({
+    success: true,
+    usage: {
+      todayQueries: 3,
+      dailyLimit: 100,
+      remainingQueries: 97,
+      resetTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      subscriptionTier: 'premium'
+    }
+  });
+});
+
+// AI endpoints
+app.post('/ai/chat', async (req, res) => {
+  const { message, context } = req.body;
+  const token = req.headers.authorization?.split(' ')[1];
+  
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'Autenticação necessária' });
+  }
+  
+  console.log('🤖 AI Chat:', { message });
+  
+  // Simular resposta da IA
+  const responses = [
+    `Baseado na sua pergunta sobre "${message}", posso sugerir alguns filmes interessantes...`,
+    `Interessante! Sobre "${message}", aqui estão algumas recomendações...`,
+    `Entendi sua busca por "${message}". Vou analisar e sugerir...`,
+    `Sobre "${message}" - deixe-me buscar as melhores opções para você...`
+  ];
+  
+  setTimeout(() => {
+    res.json({
+      success: true,
+      response: responses[Math.floor(Math.random() * responses.length)],
+      recommendations: [
+        { title: 'Filme Exemplo 1', rating: 8.5, year: 2023 },
+        { title: 'Série Exemplo 2', rating: 9.1, year: 2024 },
+        { title: 'Documentário 3', rating: 7.8, year: 2022 }
+      ],
+      queriesRemaining: 96,
+      processingTime: Math.floor(Math.random() * 2000) + 500
+    });
+  }, 1000); // Simular delay de processamento
+});
+
+app.get('/ai/status', (req, res) => {
+  res.json({
+    success: true,
+    service: 'AIssist LLM',
+    healthy: true,
+    endpoint: 'aissist.rafante-tec.online',
+    model: 'aissist-v1.0',
+    uptime: Math.floor(Math.random() * 86400),
+    timestamp: new Date().toISOString(),
+    version: '1.0.0'
+  });
+});
+
+// Content endpoints (legacy compatibility)
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK',
+    service: 'AIssist',
+    version: '1.0.0',
+    timestamp: new Date().toISOString(),
+    auth: 'enabled',
+    ai: 'enabled'
+  });
+});
+
+app.get('/movies/popular', (req, res) => {
+  res.json({
+    success: true,
+    movies: [
+      { id: 1, title: 'Demo Movie 1', rating: 8.5 },
+      { id: 2, title: 'Demo Movie 2', rating: 7.8 }
+    ]
+  });
+});
+
+app.get('/movies/search', (req, res) => {
+  const { query } = req.query;
+  res.json({
+    success: true,
+    query: query,
+    results: [
+      { id: 1, title: `Resultado para: ${query}`, rating: 8.0 }
+    ]
+  });
+});
+
+// Serve static files
+app.get('/demo', (req, res) => {
+  res.sendFile(path.join(__dirname, 'watchwise_server/web/static/demo.html'));
+});
+
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin-corrigido.html'));
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    error: 'Not found',
+    path: req.path,
+    available_endpoints: [
+      '/auth/signup [POST]',
+      '/auth/login [POST]', 
+      '/auth/me [GET]',
+      '/auth/usage [GET]',
+      '/ai/chat [POST]',
+      '/ai/status [GET]',
+      '/health [GET]',
+      '/demo [GET]',
+      '/admin [GET]'
+    ]
+  });
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log('🚀 AIssist Server FUNCIONANDO na porta', PORT);
+  console.log('🔐 Endpoints de Auth: /auth/signup, /auth/login, /auth/me');
+  console.log('🤖 Endpoints de AI: /ai/chat, /ai/status');
+  console.log('🎬 Frontend: /demo, /admin');
+  console.log('💾 Modo: Mock/Demo (banco simulado)');
 });
