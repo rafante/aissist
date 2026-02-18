@@ -398,7 +398,7 @@
                 <button class="btn btn-primary">+ Nova Assinatura</button>
             </div>
             <div id="subscriptionsList">
-                <!-- Subscriptions will be loaded here -->
+                <div class="loading">🔄 Carregando assinaturas...</div>
             </div>
         </div>
 
@@ -408,7 +408,7 @@
                 <h2>Consultas de IA</h2>
             </div>
             <div id="queriesList">
-                <!-- Queries will be loaded here -->
+                <div class="loading">🔄 Carregando consultas...</div>
             </div>
         </div>
 
@@ -419,14 +419,16 @@
             </div>
             <div style="padding: 2rem;">
                 <div id="systemStatus">
-                    <!-- System status will be loaded here -->
+                    <div class="loading">🔄 Verificando status...</div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Sample data - this will be replaced with real API calls
+        console.log('🚀 Admin Panel carregando...');
+        
+        // Sample data
         let users = [
             {id: 1, email: 'admin@aissist.com', tier: 'pro', status: true, created_at: '2026-02-01', daily_usage: 15},
             {id: 2, email: 'user@test.com', tier: 'free', status: true, created_at: '2026-02-15', daily_usage: 4},
@@ -442,6 +444,7 @@
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             body.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
+            console.log('Theme changed to:', newTheme);
         }
         
         // Load saved theme
@@ -450,6 +453,8 @@
         
         // Navigation
         function showSection(sectionName) {
+            console.log('Showing section:', sectionName);
+            
             // Update nav items
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.classList.remove('active');
@@ -472,32 +477,9 @@
             }
         }
         
-        // Add click handlers for nav items
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.addEventListener('click', function() {
-                    const section = this.getAttribute('data-section');
-                    showSection(section);
-                });
-            });
-            
-            // Load initial data
-            loadUsers();
-            
-            // Add form submit handler
-            document.getElementById('userFormElement').addEventListener('submit', function(e) {
-                e.preventDefault();
-                saveUser();
-            });
-            
-            // Add search handler
-            document.getElementById('userSearch').addEventListener('keyup', function() {
-                filterUsers();
-            });
-        });
-        
         // Users management
         function loadUsers() {
+            console.log('Loading users...');
             renderUsers(users);
         }
         
@@ -547,6 +529,7 @@
         }
         
         function showUserForm(user = null) {
+            console.log('Showing user form:', user);
             document.getElementById('userForm').classList.add('active');
             document.getElementById('usersList').style.display = 'none';
             
@@ -571,6 +554,7 @@
         }
         
         function editUser(id) {
+            console.log('Editing user:', id);
             const user = users.find(u => u.id === id);
             if (user) {
                 showUserForm(user);
@@ -578,6 +562,7 @@
         }
         
         function deleteUser(id) {
+            console.log('Deleting user:', id);
             if (confirm('Tem certeza que deseja deletar este usuário? Esta ação não pode ser desfeita.')) {
                 const index = users.findIndex(u => u.id === id);
                 if (index > -1) {
@@ -589,11 +574,11 @@
         }
         
         function saveUser() {
+            console.log('Saving user...');
             const email = document.getElementById('userEmail').value;
             const password = document.getElementById('userPassword').value;
             const tier = document.getElementById('userTier').value;
             const status = document.getElementById('userStatus').value === 'true';
-            const userId = document.getElementById('userId').value;
             
             if (!email) {
                 showMessage('Email é obrigatório!', 'error');
@@ -640,79 +625,58 @@
         
         function loadSubscriptions() {
             const container = document.getElementById('subscriptionsList');
-            container.innerHTML = '<div class="loading">🔄 Carregando assinaturas...</div>';
-            
-            // Mock data for subscriptions
-            setTimeout(() => {
-                container.innerHTML = `
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Usuário</th>
-                                <th>Plano</th>
-                                <th>Valor</th>
-                                <th>Status</th>
-                                <th>Criado</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>1</td>
-                                <td>premium@user.com</td>
-                                <td><span class="status-badge status-premium">PREMIUM</span></td>
-                                <td>R$ 19,90</td>
-                                <td><span class="status-badge status-active">ATIVO</span></td>
-                                <td>2026-02-10</td>
-                                <td>
-                                    <div class="actions">
-                                        <button class="btn btn-primary">Editar</button>
-                                        <button class="btn btn-danger">Cancelar</button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                `;
-            }, 1000);
+            container.innerHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuário</th>
+                            <th>Plano</th>
+                            <th>Valor</th>
+                            <th>Status</th>
+                            <th>Criado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>premium@user.com</td>
+                            <td><span class="status-badge status-premium">PREMIUM</span></td>
+                            <td>R$ 19,90</td>
+                            <td><span class="status-badge status-active">ATIVO</span></td>
+                            <td>2026-02-10</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
         }
         
         function loadQueries() {
             const container = document.getElementById('queriesList');
-            container.innerHTML = '<div class="loading">🔄 Carregando consultas...</div>';
-            
-            // Mock data for queries
-            setTimeout(() => {
-                container.innerHTML = `
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Usuário</th>
-                                <th>Consulta</th>
-                                <th>Status</th>
-                                <th>Tempo (ms)</th>
-                                <th>Data</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>1</td>
-                                <td>user@test.com</td>
-                                <td>filmes de suspense sem gore</td>
-                                <td><span class="status-badge status-active">SUCCESS</span></td>
-                                <td>1250</td>
-                                <td>2026-02-18 01:15</td>
-                                <td>
-                                    <button class="btn btn-primary">Ver Resposta</button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                `;
-            }, 1000);
+            container.innerHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuário</th>
+                            <th>Consulta</th>
+                            <th>Status</th>
+                            <th>Tempo (ms)</th>
+                            <th>Data</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>user@test.com</td>
+                            <td>filmes de suspense sem gore</td>
+                            <td><span class="status-badge status-active">SUCCESS</span></td>
+                            <td>1250</td>
+                            <td>2026-02-18 01:15</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
         }
         
         function loadAnalytics() {
@@ -731,12 +695,8 @@
                         <span style="color: var(--success);">🟢 Connected</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; padding: 1rem; background: var(--bg-tertiary); border-radius: 6px; border: 1px solid var(--border);">
-                        <span>AI Service (ReViva LLM)</span>
+                        <span>IA Service (ReViva LLM)</span>
                         <span style="color: var(--success);">🟢 Online</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; padding: 1rem; background: var(--bg-tertiary); border-radius: 6px; border: 1px solid var(--border);">
-                        <span>API Gateway</span>
-                        <span style="color: var(--success);">🟢 Available</span>
                     </div>
                 </div>
             `;
@@ -762,8 +722,9 @@
         }
         
         function switchToDemo() {
-            document.body.innerHTML = \`
-<!DOCTYPE html>
+            console.log('Switching to demo...');
+            if (confirm('Alternar para Demo Original? Você pode voltar clicando em "Voltar ao Admin".')) {
+                const demoHTML = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -827,24 +788,6 @@
             color: #00d4ff;
             margin-bottom: 1rem;
         }
-        .status-online {
-            color: #00ff88;
-            font-weight: bold;
-        }
-        .admin-btn {
-            background: #3b82f6;
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 6px;
-            cursor: pointer;
-            margin-top: 1rem;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-        .admin-btn:hover {
-            background: #2563eb;
-        }
     </style>
 </head>
 <body>
@@ -853,126 +796,60 @@
     <div class="header">
         <h1>🎬 AIssist</h1>
         <p style="font-size: 1.5rem; opacity: 0.9;">Sistema Inteligente de Recomendações</p>
-        <p style="opacity: 0.8; margin-top: 1rem;">Powered by AI • Personalizado • Confiável</p>
     </div>
 
     <div class="demo-grid">
         <div class="demo-card">
             <h3>🤖 IA Conversacional</h3>
-            <p>Sistema inteligente que entende suas preferências e oferece recomendações personalizadas de filmes e séries.</p>
-            <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; margin: 1rem 0;">
-                <div>🟢 Status: <span class="status-online">Online</span></div>
-                <div>🧠 Modelo: ReViva LLM</div>
-                <div>⚡ Latência: ~1.2s</div>
-            </div>
+            <p>Sistema inteligente de recomendações personalizadas usando ReViva LLM.</p>
         </div>
-        
         <div class="demo-card">
-            <h3>💰 Planos e Preços</h3>
-            <div style="text-align: left;">
-                <div style="margin: 1rem 0; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 8px;">
-                    <strong>🆓 Free</strong><br>
-                    • 5 consultas por dia<br>
-                    • Recomendações básicas<br>
-                    • Suporte por email
-                </div>
-                <div style="margin: 1rem 0; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 8px;">
-                    <strong>💎 Premium - R$ 19,90/mês</strong><br>
-                    • 100 consultas por dia<br>
-                    • Recomendações avançadas<br>
-                    • Anti-spoiler system<br>
-                    • Suporte prioritário
-                </div>
-                <div style="margin: 1rem 0; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 8px;">
-                    <strong>🚀 Pro - R$ 39,90/mês</strong><br>
-                    • 500 consultas por dia<br>
-                    • Todas as funcionalidades<br>
-                    • API access<br>
-                    • Suporte 24/7
-                </div>
-            </div>
+            <h3>💰 Planos Disponíveis</h3>
+            <p>Free (5/dia), Premium (R$ 19,90), Pro (R$ 39,90)</p>
         </div>
-        
         <div class="demo-card">
-            <h3>📊 Métricas do Sistema</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
-                <div style="text-align: center; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px;">
-                    <div style="font-size: 2rem; font-weight: bold; color: #00d4ff;">\${users.length || 127}</div>
-                    <div style="opacity: 0.8;">Usuários</div>
-                </div>
-                <div style="text-align: center; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px;">
-                    <div style="font-size: 2rem; font-weight: bold; color: #00ff88;">847</div>
-                    <div style="opacity: 0.8;">Consultas Hoje</div>
-                </div>
-                <div style="text-align: center; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px;">
-                    <div style="font-size: 2rem; font-weight: bold; color: #fbbf24;">18.3%</div>
-                    <div style="opacity: 0.8;">Conversão</div>
-                </div>
-                <div style="text-align: center; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px;">
-                    <div style="font-size: 2rem; font-weight: bold; color: #00ff88;">R$ 1.2K</div>
-                    <div style="opacity: 0.8;">Receita/Mês</div>
-                </div>
-            </div>
+            <h3>📊 Métricas</h3>
+            <p>Usuários: ${users.length}, Queries: 847, Conversão: 18.3%</p>
         </div>
-        
         <div class="demo-card">
-            <h3>🔧 Painel Administrativo</h3>
-            <p>Acesse o painel completo para gerenciar usuários, assinaturas, consultas e configurações do sistema.</p>
-            <ul style="list-style: none; padding: 0; margin: 1rem 0;">
-                <li>✅ CRUD de usuários</li>
-                <li>✅ Gerenciamento de assinaturas</li>
-                <li>✅ Analytics em tempo real</li>
-                <li>✅ Configurações do sistema</li>
-                <li>✅ Dark/Light mode</li>
-            </ul>
-            <button class="admin-btn" onclick="location.reload()">
-                🚀 Ir para Admin Panel
-            </button>
+            <h3>⚡ Status</h3>
+            <p>🟢 Database: Online<br>🟢 IA: Funcionando<br>🟢 API: Ativo</p>
         </div>
-        
-        <div class="demo-card">
-            <h3>🎯 Recursos Únicos</h3>
-            <ul style="list-style: none; padding: 0;">
-                <li style="margin: 0.5rem 0;">🛡️ <strong>Anti-Spoiler:</strong> Filtragem inteligente</li>
-                <li style="margin: 0.5rem 0;">🎮 <strong>Gamificação:</strong> XP e conquistas</li>
-                <li style="margin: 0.5rem 0;">🔗 <strong>Listas Colaborativas:</strong> Usuários contribuem</li>
-                <li style="margin: 0.5rem 0;">📱 <strong>Mobile-First:</strong> PWA otimizado</li>
-                <li style="margin: 0.5rem 0;">🌐 <strong>API RESTful:</strong> Integração fácil</li>
-            </ul>
-        </div>
-        
-        <div class="demo-card">
-            <h3>⚡ Status Técnico</h3>
-            <div style="display: grid; gap: 0.5rem; margin-top: 1rem;">
-                <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 4px;">
-                    <span>Database</span>
-                    <span class="status-online">🟢 PostgreSQL</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 4px;">
-                    <span>IA Service</span>
-                    <span class="status-online">🟢 ReViva LLM</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 4px;">
-                    <span>API Gateway</span>
-                    <span class="status-online">🟢 Online</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 4px;">
-                    <span>CDN</span>
-                    <span class="status-online">🟢 Cloudflare</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div style="text-align: center; margin-top: 4rem; padding: 2rem; background: rgba(0,0,0,0.2); border-radius: 15px; max-width: 600px; margin-left: auto; margin-right: auto;">
-        <h3>🚀 Pronto para Produção</h3>
-        <p>Sistema completo desenvolvido e testado</p>
-        <p style="opacity: 0.8;">Deploy automático • Monitoramento 24/7 • Backup diário</p>
     </div>
 </body>
-</html>
-            \`;
+</html>`;
+                document.open();
+                document.write(demoHTML);
+                document.close();
+            }
         }
+        
+        // Initialize on DOM ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing...');
+            
+            // Add nav click handlers
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const section = this.getAttribute('data-section');
+                    showSection(section);
+                });
+            });
+            
+            // Add form submit handler
+            document.getElementById('userFormElement').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveUser();
+            });
+            
+            // Add search handler
+            document.getElementById('userSearch').addEventListener('keyup', filterUsers);
+            
+            // Load initial data
+            loadUsers();
+            
+            console.log('✅ Admin Panel inicializado com sucesso!');
+        });
     </script>
 </body>
 </html>
