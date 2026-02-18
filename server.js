@@ -2,6 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
+const { adminHTML } = require('./inline-admin');
 
 const port = process.env.PORT || 8080;
 
@@ -57,7 +58,8 @@ const server = http.createServer(async (req, res) => {
         switch (pathname) {
             case '/':
             case '/admin':
-                serveFile(res, 'watchwise_server/web/static/admin.html');
+                res.writeHead(200, {'Content-Type': 'text/html', 'Access-Control-Allow-Origin': '*'});
+                res.end(adminHTML);
                 break;
                 
             case '/demo':
