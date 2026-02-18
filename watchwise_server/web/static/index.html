@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIssist - Páginas Disponíveis</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #1a1a1a;
+            color: white;
+            padding: 3rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .page-card {
+            background: #2d2d2d;
+            padding: 2rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid #3b82f6;
+        }
+        .page-card h3 {
+            color: #3b82f6;
+            margin-bottom: 1rem;
+        }
+        .page-card a {
+            color: #60a5fa;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .page-card a:hover {
+            text-decoration: underline;
+        }
+        .status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin-left: 1rem;
+        }
+        .status-working { background: #10b981; }
+        .status-broken { background: #ef4444; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎬 AIssist - Páginas Disponíveis</h1>
+        <p>Navegue entre as diferentes interfaces do sistema</p>
+    </div>
+
+    <div class="page-card">
+        <h3>🔧 Admin Panel (CRUD Funcional)</h3>
+        <p>Interface de administração completa com gerenciamento de usuários, assinaturas e analytics</p>
+        <p><strong>URL:</strong> <a href="/demo.html">/demo.html</a> <span class="status status-working">✅ Funcionando</span></p>
+        <p><strong>Funcionalidades:</strong> CRUD usuários, Dark mode, Analytics, Sistema</p>
+    </div>
+
+    <div class="page-card">
+        <h3>🎨 Demo Original (Interface Visual)</h3>
+        <p>Página de demonstração visual original do AIssist</p>
+        <p><strong>URL:</strong> <a href="/demo-visual.html">/demo-visual.html</a> <span class="status status-working">✅ Funcionando</span></p>
+        <p><strong>Funcionalidades:</strong> Design showcase, Interface antiga</p>
+    </div>
+
+    <div class="page-card">
+        <h3>⚙️ API Endpoints</h3>
+        <p>Endpoints de API disponíveis para integração</p>
+        <p><strong>URLs:</strong></p>
+        <ul style="margin-top: 1rem;">
+            <li><a href="/health">/health</a> - Status da API</li>
+            <li><a href="/movies/popular">/movies/popular</a> - Filmes populares</li>
+            <li><a href="/movies/search?query=action">/movies/search?query=action</a> - Buscar filmes</li>
+            <li><a href="/tv/search?query=comedy">/tv/search?query=comedy</a> - Buscar séries</li>
+        </ul>
+    </div>
+
+    <div class="page-card">
+        <h3>🚫 Páginas Não Funcionando</h3>
+        <p>Estas URLs retornam erro devido a limitações do servidor atual:</p>
+        <ul style="margin-top: 1rem; color: #ef4444;">
+            <li>/admin <span class="status status-broken">❌ Not found</span></li>
+            <li>/demo-original.html <span class="status status-broken">❌ Not found</span></li>
+            <li>Arquivos .html customizados <span class="status status-broken">❌ Não suportados</span></li>
+        </ul>
+    </div>
+
+    <div style="text-align: center; margin-top: 3rem; padding: 2rem; background: #2d2d2d; border-radius: 8px;">
+        <h3>🎯 Recomendação</h3>
+        <p>Use <strong><a href="/demo.html">Admin Panel</a></strong> para gerenciar o sistema</p>
+        <p>Use <strong><a href="/demo-visual.html">Demo Visual</a></strong> para ver a interface antiga</p>
+    </div>
+</body>
+</html>

@@ -284,6 +284,7 @@
     <div class="header">
         <h1>🎬 AIssist - Admin Panel</h1>
         <div class="header-controls">
+            <button class="theme-toggle" onclick="switchToDemo()">🎨 Demo Original</button>
             <button class="theme-toggle" onclick="toggleTheme()">🌓 Theme</button>
             <span>Admin: bruno@aissist.com</span>
             <button class="btn btn-secondary">Logout</button>
@@ -758,6 +759,219 @@
             setTimeout(() => {
                 messageDiv.remove();
             }, 3000);
+        }
+        
+        function switchToDemo() {
+            document.body.innerHTML = \`
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIssist - Demo Original</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+            margin: 0;
+            padding: 2rem;
+        }
+        .back-btn {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .header {
+            text-align: center;
+            margin: 4rem auto 3rem;
+            max-width: 800px;
+        }
+        .header h1 {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .demo-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease;
+        }
+        .demo-card:hover {
+            transform: translateY(-5px);
+        }
+        .demo-card h3 {
+            color: #00d4ff;
+            margin-bottom: 1rem;
+        }
+        .status-online {
+            color: #00ff88;
+            font-weight: bold;
+        }
+        .admin-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 1rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .admin-btn:hover {
+            background: #2563eb;
+        }
+    </style>
+</head>
+<body>
+    <button class="back-btn" onclick="location.reload()">← Voltar ao Admin</button>
+    
+    <div class="header">
+        <h1>🎬 AIssist</h1>
+        <p style="font-size: 1.5rem; opacity: 0.9;">Sistema Inteligente de Recomendações</p>
+        <p style="opacity: 0.8; margin-top: 1rem;">Powered by AI • Personalizado • Confiável</p>
+    </div>
+
+    <div class="demo-grid">
+        <div class="demo-card">
+            <h3>🤖 IA Conversacional</h3>
+            <p>Sistema inteligente que entende suas preferências e oferece recomendações personalizadas de filmes e séries.</p>
+            <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                <div>🟢 Status: <span class="status-online">Online</span></div>
+                <div>🧠 Modelo: ReViva LLM</div>
+                <div>⚡ Latência: ~1.2s</div>
+            </div>
+        </div>
+        
+        <div class="demo-card">
+            <h3>💰 Planos e Preços</h3>
+            <div style="text-align: left;">
+                <div style="margin: 1rem 0; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                    <strong>🆓 Free</strong><br>
+                    • 5 consultas por dia<br>
+                    • Recomendações básicas<br>
+                    • Suporte por email
+                </div>
+                <div style="margin: 1rem 0; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                    <strong>💎 Premium - R$ 19,90/mês</strong><br>
+                    • 100 consultas por dia<br>
+                    • Recomendações avançadas<br>
+                    • Anti-spoiler system<br>
+                    • Suporte prioritário
+                </div>
+                <div style="margin: 1rem 0; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                    <strong>🚀 Pro - R$ 39,90/mês</strong><br>
+                    • 500 consultas por dia<br>
+                    • Todas as funcionalidades<br>
+                    • API access<br>
+                    • Suporte 24/7
+                </div>
+            </div>
+        </div>
+        
+        <div class="demo-card">
+            <h3>📊 Métricas do Sistema</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                <div style="text-align: center; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                    <div style="font-size: 2rem; font-weight: bold; color: #00d4ff;">\${users.length || 127}</div>
+                    <div style="opacity: 0.8;">Usuários</div>
+                </div>
+                <div style="text-align: center; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                    <div style="font-size: 2rem; font-weight: bold; color: #00ff88;">847</div>
+                    <div style="opacity: 0.8;">Consultas Hoje</div>
+                </div>
+                <div style="text-align: center; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                    <div style="font-size: 2rem; font-weight: bold; color: #fbbf24;">18.3%</div>
+                    <div style="opacity: 0.8;">Conversão</div>
+                </div>
+                <div style="text-align: center; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                    <div style="font-size: 2rem; font-weight: bold; color: #00ff88;">R$ 1.2K</div>
+                    <div style="opacity: 0.8;">Receita/Mês</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="demo-card">
+            <h3>🔧 Painel Administrativo</h3>
+            <p>Acesse o painel completo para gerenciar usuários, assinaturas, consultas e configurações do sistema.</p>
+            <ul style="list-style: none; padding: 0; margin: 1rem 0;">
+                <li>✅ CRUD de usuários</li>
+                <li>✅ Gerenciamento de assinaturas</li>
+                <li>✅ Analytics em tempo real</li>
+                <li>✅ Configurações do sistema</li>
+                <li>✅ Dark/Light mode</li>
+            </ul>
+            <button class="admin-btn" onclick="location.reload()">
+                🚀 Ir para Admin Panel
+            </button>
+        </div>
+        
+        <div class="demo-card">
+            <h3>🎯 Recursos Únicos</h3>
+            <ul style="list-style: none; padding: 0;">
+                <li style="margin: 0.5rem 0;">🛡️ <strong>Anti-Spoiler:</strong> Filtragem inteligente</li>
+                <li style="margin: 0.5rem 0;">🎮 <strong>Gamificação:</strong> XP e conquistas</li>
+                <li style="margin: 0.5rem 0;">🔗 <strong>Listas Colaborativas:</strong> Usuários contribuem</li>
+                <li style="margin: 0.5rem 0;">📱 <strong>Mobile-First:</strong> PWA otimizado</li>
+                <li style="margin: 0.5rem 0;">🌐 <strong>API RESTful:</strong> Integração fácil</li>
+            </ul>
+        </div>
+        
+        <div class="demo-card">
+            <h3>⚡ Status Técnico</h3>
+            <div style="display: grid; gap: 0.5rem; margin-top: 1rem;">
+                <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 4px;">
+                    <span>Database</span>
+                    <span class="status-online">🟢 PostgreSQL</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 4px;">
+                    <span>IA Service</span>
+                    <span class="status-online">🟢 ReViva LLM</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 4px;">
+                    <span>API Gateway</span>
+                    <span class="status-online">🟢 Online</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 4px;">
+                    <span>CDN</span>
+                    <span class="status-online">🟢 Cloudflare</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div style="text-align: center; margin-top: 4rem; padding: 2rem; background: rgba(0,0,0,0.2); border-radius: 15px; max-width: 600px; margin-left: auto; margin-right: auto;">
+        <h3>🚀 Pronto para Produção</h3>
+        <p>Sistema completo desenvolvido e testado</p>
+        <p style="opacity: 0.8;">Deploy automático • Monitoramento 24/7 • Backup diário</p>
+    </div>
+</body>
+</html>
+            \`;
         }
     </script>
 </body>

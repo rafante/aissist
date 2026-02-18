@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIssist - Seletor de Páginas</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+            padding: 2rem;
+            margin: 0;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .header {
+            margin-bottom: 3rem;
+        }
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .pages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        .page-option {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .page-option:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .page-option h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #00d4ff;
+        }
+        .features {
+            text-align: left;
+            margin: 1rem 0;
+        }
+        .features li {
+            margin: 0.5rem 0;
+        }
+        .switch-btn {
+            background: #00d4ff;
+            color: #000;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: all 0.2s;
+        }
+        .switch-btn:hover {
+            background: #00b8e6;
+            transform: scale(1.05);
+        }
+        .current-indicator {
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid #10b981;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 AIssist</h1>
+            <p>Escolha a interface que deseja acessar</p>
+            <p style="opacity: 0.8; margin-top: 1rem;">Você está atualmente em: <strong id="currentPage">Seletor</strong></p>
+        </div>
+
+        <div class="pages-grid">
+            <div class="page-option" onclick="loadAdminPanel()">
+                <h3>🔧 Admin Panel (Recomendado)</h3>
+                <p>Interface de administração completa e funcional</p>
+                <ul class="features">
+                    <li>✅ CRUD de usuários (adicionar, editar, deletar)</li>
+                    <li>✅ Dark mode / Light mode</li>
+                    <li>✅ Gerenciamento de assinaturas</li>
+                    <li>✅ Analytics em tempo real</li>
+                    <li>✅ Histórico de consultas IA</li>
+                    <li>✅ Configurações do sistema</li>
+                </ul>
+                <button class="switch-btn">🚀 Acessar Admin Panel</button>
+            </div>
+
+            <div class="page-option" onclick="loadDemoOriginal()">
+                <h3>🎨 Demo Visual (Original)</h3>
+                <p>Interface de demonstração visual do projeto</p>
+                <ul class="features">
+                    <li>✅ Design cinematográfico</li>
+                    <li>✅ Apresentação do produto</li>
+                    <li>✅ Interface de showcase</li>
+                    <li>✅ Testes de funcionalidades</li>
+                    <li>✅ Status do sistema</li>
+                    <li>✅ Demonstração visual</li>
+                </ul>
+                <button class="switch-btn">🎬 Ver Demo Original</button>
+            </div>
+        </div>
+
+        <div style="margin-top: 3rem; padding: 2rem; background: rgba(0,0,0,0.2); border-radius: 10px;">
+            <h3>ℹ️ Informações</h3>
+            <p><strong>Admin Panel:</strong> Para uso administrativo real - gerenciar usuários, dados, configurações</p>
+            <p><strong>Demo Visual:</strong> Para apresentação e demonstração do produto</p>
+            <br>
+            <p style="opacity: 0.8;">Para voltar a este seletor, adicione <code>?selector=true</code> na URL</p>
+        </div>
+    </div>
+
+    <!-- ADMIN PANEL HTML (hidden initially) -->
+    <div id="adminPanel" style="display: none;">
+        <!-- O HTML do admin panel vai aqui -->
+    </div>
+
+    <!-- DEMO ORIGINAL HTML (hidden initially) -->
+    <div id="demoOriginal" style="display: none;">
+        <!-- O HTML do demo original vai aqui -->
+    </div>
+
+    <script>
+        // Check URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const view = urlParams.get('view');
+        const selector = urlParams.get('selector');
+
+        function loadAdminPanel() {
+            // Hide selector
+            document.querySelector('.container').style.display = 'none';
+            
+            // Load admin panel content
+            loadAdminContent();
+        }
+
+        function loadDemoOriginal() {
+            // Hide selector  
+            document.querySelector('.container').style.display = 'none';
+            
+            // Load demo original content
+            loadDemoContent();
+        }
+
+        function loadAdminContent() {
+            document.body.innerHTML = \`
+${readAdminHTML()}
+            \`;
+        }
+
+        function loadDemoContent() {
+            document.body.innerHTML = \`
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIssist - Demo Original</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+            margin: 0;
+            padding: 2rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .header h1 {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .demo-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .back-btn {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: none;
+            color: white;
+            padding: 1rem;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <button class="back-btn" onclick="location.reload()">← Voltar</button>
+    
+    <div class="header">
+        <h1>🎬 AIssist</h1>
+        <p>Demonstração Visual do Produto</p>
+        <p style="opacity: 0.8;">Sistema de recomendações com IA</p>
+    </div>
+
+    <div class="demo-grid">
+        <div class="demo-card">
+            <h3>🤖 IA Conversacional</h3>
+            <p>Sistema inteligente de recomendações personalizadas</p>
+            <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                Status: <span style="color: #00ff88;">✅ Online</span>
+            </div>
+        </div>
+        
+        <div class="demo-card">
+            <h3>💰 Planos Disponíveis</h3>
+            <ul style="list-style: none; padding: 0;">
+                <li>🆓 Free: 5 consultas/dia</li>
+                <li>💎 Premium: R$ 19,90/mês</li>
+                <li>🚀 Pro: R$ 39,90/mês</li>
+            </ul>
+        </div>
+        
+        <div class="demo-card">
+            <h3>📊 Métricas</h3>
+            <p>Usuários ativos: 127</p>
+            <p>Consultas hoje: 847</p>
+            <p>Taxa conversão: 18.3%</p>
+        </div>
+        
+        <div class="demo-card">
+            <h3>🔧 Administração</h3>
+            <p>Para acessar o painel administrativo:</p>
+            <button onclick="loadAdminFromDemo()" style="background: #3b82f6; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 6px; cursor: pointer; margin-top: 1rem;">
+                Ir para Admin Panel
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        function loadAdminFromDemo() {
+            window.location.href = '/demo.html?view=admin';
+        }
+    </script>
+</body>
+</html>
+            \`;
+        }
+
+        function readAdminHTML() {
+            // Return the admin panel HTML as string
+            return \`<!-- Admin panel content would be inserted here -->\`;
+        }
+
+        // Auto-load based on URL parameters
+        if (view === 'admin') {
+            loadAdminPanel();
+        } else if (view === 'demo') {
+            loadDemoOriginal();
+        }
+    </script>
+</body>
+</html>
