@@ -3,614 +3,852 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIssist - Admin Dashboard</title>
+    <title>AIssist - Admin Panel</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-tertiary: #3a3a3a;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --border: #404040;
         }
         
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #e2e8f0;
+            --text-primary: #1a202c;
+            --text-secondary: #4a5568;
+            --border: #e2e8f0;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: #333;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
         }
         
         .header {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
             padding: 1rem 2rem;
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
         .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .theme-toggle {
+            background: var(--accent);
             color: white;
-            font-size: 2rem;
-            font-weight: 300;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
         }
         
-        .header .user-info {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 0.9rem;
-            margin-top: 0.5rem;
+        .theme-toggle:hover { background: var(--accent-hover); }
+        
+        .nav {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            padding: 0;
         }
         
-        .dashboard {
-            display: grid;
-            grid-template-columns: 250px 1fr;
-            height: calc(100vh - 100px);
-            gap: 0;
-        }
-        
-        .sidebar {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 2rem 0;
-        }
-        
-        .sidebar-item {
+        .nav-item {
             padding: 1rem 2rem;
             cursor: pointer;
-            transition: all 0.3s ease;
-            border-left: 4px solid transparent;
-            color: white;
+            color: var(--text-secondary);
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        
+        .nav-item:hover, .nav-item.active {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-bottom-color: var(--accent);
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .section {
+            display: none;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .section.active { display: block; }
+        
+        .section-header {
+            background: var(--bg-tertiary);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border);
             display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
             align-items: center;
             gap: 0.5rem;
         }
         
-        .sidebar-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-left: 4px solid #00d4ff;
+        .btn-primary { 
+            background: var(--accent); 
+            color: white; 
+        }
+        .btn-primary:hover { background: var(--accent-hover); }
+        
+        .btn-success { 
+            background: var(--success); 
+            color: white; 
         }
         
-        .sidebar-item.active {
-            background: rgba(255, 255, 255, 0.2);
-            border-left: 4px solid #00d4ff;
+        .btn-danger { 
+            background: var(--danger); 
+            color: white; 
         }
         
-        .main-content {
-            background: rgba(255, 255, 255, 0.95);
+        .btn-secondary { 
+            background: var(--bg-tertiary); 
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .table th {
+            background: var(--bg-tertiary);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+        
+        .table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+        
+        .table tr:hover { background: var(--bg-tertiary); }
+        
+        .form {
             padding: 2rem;
-            overflow-y: auto;
+            display: none;
+        }
+        
+        .form.active { display: block; }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .form-input, .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .status-active { background: var(--success); color: white; }
+        .status-inactive { background: var(--danger); color: white; }
+        .status-free { background: var(--bg-tertiary); color: var(--text-primary); }
+        .status-premium { background: var(--warning); color: white; }
+        .status-pro { background: var(--accent); color: white; }
+        
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+        
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        
+        .success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        
+        .search-bar {
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            width: 300px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .actions {
+            display: flex;
+            gap: 0.5rem;
         }
         
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
+            gap: 2rem;
+            padding: 2rem;
         }
         
         .stat-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            border-left: 4px solid #667eea;
-        }
-        
-        .stat-card h3 {
-            color: #666;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-        }
-        
-        .stat-card .value {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #333;
-        }
-        
-        .stat-card .trend {
-            font-size: 0.8rem;
-            color: #00d4ff;
-            margin-top: 0.5rem;
-        }
-        
-        .content-section {
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
-        
-        .content-section.active {
-            display: block;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .data-table {
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            margin: 1rem 0;
-        }
-        
-        .data-table table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        .data-table th {
-            background: #f8f9fa;
-            padding: 1rem;
-            text-align: left;
-            font-weight: 600;
-            color: #555;
-        }
-        
-        .data-table td {
-            padding: 1rem;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .data-table tr:hover {
-            background: #f8f9fa;
-        }
-        
-        .status-badge {
-            padding: 0.3rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-        
-        .status-active {
-            background: #d4edda;
-            color: #155724;
-        }
-        
-        .status-inactive {
-            background: #f8d7da;
-            color: #721c24;
-        }
-        
-        .status-premium {
-            background: #fff3cd;
-            color: #856404;
-        }
-        
-        .btn {
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            margin: 0.2rem;
-        }
-        
-        .btn-primary {
-            background: #667eea;
-            color: white;
-        }
-        
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-        }
-        
-        .loading {
-            display: none;
-            text-align: center;
+            background: var(--bg-tertiary);
             padding: 2rem;
-            color: #666;
+            border-radius: 8px;
+            border: 1px solid var(--border);
         }
         
-        .error {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 1rem;
-            border-radius: 5px;
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--accent);
             margin: 1rem 0;
-            display: none;
-        }
-        
-        .charts {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            margin: 2rem 0;
-        }
-        
-        .chart-container {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
-<body>
+<body data-theme="dark">
     <div class="header">
-        <h1>🎬 AIssist Admin Dashboard</h1>
-        <div class="user-info">Conectado como: admin@aissist.com | Última atualização: <span id="lastUpdate">Carregando...</span></div>
+        <h1>🎬 AIssist - Admin Panel</h1>
+        <div class="header-controls">
+            <button class="theme-toggle" onclick="switchToDemo()">🎨 Demo Original</button>
+            <button class="theme-toggle" onclick="toggleTheme()">🌓 Theme</button>
+            <span>Admin: bruno@aissist.com</span>
+            <button class="btn btn-secondary">Logout</button>
+        </div>
     </div>
 
-    <div class="dashboard">
-        <div class="sidebar">
-            <div class="sidebar-item active" onclick="showSection('overview')">
-                📊 Visão Geral
+    <div class="nav">
+        <div class="nav-item active" data-section="users">👥 Usuários</div>
+        <div class="nav-item" data-section="subscriptions">💰 Assinaturas</div>
+        <div class="nav-item" data-section="queries">🤖 Consultas IA</div>
+        <div class="nav-item" data-section="analytics">📊 Analytics</div>
+        <div class="nav-item" data-section="system">⚙️ Sistema</div>
+    </div>
+
+    <div class="container">
+        <!-- USERS SECTION -->
+        <div id="users" class="section active">
+            <div class="section-header">
+                <div>
+                    <h2>Gerenciamento de Usuários</h2>
+                    <p style="margin-top: 0.5rem; color: var(--text-secondary);">Adicionar, editar e remover usuários da plataforma</p>
+                </div>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <input type="text" class="search-bar" placeholder="Buscar usuários..." id="userSearch">
+                    <button class="btn btn-primary" onclick="showUserForm()">+ Novo Usuário</button>
+                </div>
             </div>
-            <div class="sidebar-item" onclick="showSection('users')">
-                👥 Usuários
+
+            <div id="usersList">
+                <!-- Users will be loaded here -->
             </div>
-            <div class="sidebar-item" onclick="showSection('subscriptions')">
-                💰 Assinaturas
-            </div>
-            <div class="sidebar-item" onclick="showSection('queries')">
-                🤖 Consultas IA
-            </div>
-            <div class="sidebar-item" onclick="showSection('analytics')">
-                📈 Analytics
-            </div>
-            <div class="sidebar-item" onclick="showSection('system')">
-                ⚙️ Sistema
+
+            <div id="userForm" class="form">
+                <h3 id="userFormTitle">Novo Usuário</h3>
+                <form id="userFormElement">
+                    <input type="hidden" id="userId" value="">
+                    
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="userEmail" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-input" id="userPassword">
+                        <small style="color: var(--text-secondary);">Deixe em branco para manter senha atual</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Plano</label>
+                        <select class="form-select" id="userTier" required>
+                            <option value="free">Free (5 queries/dia)</option>
+                            <option value="premium">Premium (100 queries/dia)</option>
+                            <option value="pro">Pro (500 queries/dia)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" id="userStatus" required>
+                            <option value="true">Ativo</option>
+                            <option value="false">Inativo</option>
+                        </select>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                        <button type="submit" class="btn btn-success">Salvar</button>
+                        <button type="button" class="btn btn-secondary" onclick="hideUserForm()">Cancelar</button>
+                    </div>
+                </form>
             </div>
         </div>
 
-        <div class="main-content">
-            <div id="loading" class="loading">
-                <h3>🔄 Carregando dados...</h3>
+        <!-- ANALYTICS SECTION -->
+        <div id="analytics" class="section">
+            <div class="section-header">
+                <h2>Analytics e Métricas</h2>
             </div>
             
-            <div id="error" class="error">
-                <strong>Erro:</strong> <span id="errorMessage"></span>
-            </div>
-
-            <!-- Overview Section -->
-            <div id="overview" class="content-section active">
-                <h2>📊 Visão Geral do Sistema</h2>
-                
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h3>Total Usuários</h3>
-                        <div class="value" id="totalUsers">0</div>
-                        <div class="trend">+5 esta semana</div>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Assinaturas Ativas</h3>
-                        <div class="value" id="activeSubscriptions">0</div>
-                        <div class="trend">+2 este mês</div>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Consultas Hoje</h3>
-                        <div class="value" id="todayQueries">0</div>
-                        <div class="trend">+15% vs ontem</div>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Receita Mensal</h3>
-                        <div class="value">R$ <span id="monthlyRevenue">0</span></div>
-                        <div class="trend">+8% vs mês anterior</div>
-                    </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Total Users</h3>
+                    <div class="stat-value" id="totalUsers">0</div>
+                    <p style="color: var(--text-secondary);">Usuários cadastrados</p>
                 </div>
-
-                <div class="charts">
-                    <div class="chart-container">
-                        <h3>📈 Usuários por Dia (7 dias)</h3>
-                        <canvas id="usersChart" width="400" height="200"></canvas>
-                    </div>
-                    <div class="chart-container">
-                        <h3>💰 Conversão Free → Premium</h3>
-                        <canvas id="conversionChart" width="400" height="200"></canvas>
-                    </div>
+                <div class="stat-card">
+                    <h3>Active Subscriptions</h3>
+                    <div class="stat-value" id="activeSubscriptions">0</div>
+                    <p style="color: var(--text-secondary);">Assinaturas ativas</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Queries Today</h3>
+                    <div class="stat-value" id="totalQueries">0</div>
+                    <p style="color: var(--text-secondary);">Consultas processadas</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Revenue (Month)</h3>
+                    <div class="stat-value" id="monthlyRevenue">R$ 0</div>
+                    <p style="color: var(--text-secondary);">Receita mensal</p>
                 </div>
             </div>
+        </div>
 
-            <!-- Users Section -->
-            <div id="users" class="content-section">
-                <h2>👥 Gerenciamento de Usuários</h2>
-                
-                <div class="data-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Email</th>
-                                <th>Plano</th>
-                                <th>Uso Hoje</th>
-                                <th>Cadastro</th>
-                                <th>Status</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="usersTable">
-                            <tr>
-                                <td colspan="7">🔄 Carregando usuários...</td>
-                            </tr>
-                        </tbody>
-                    </table>
+        <!-- SUBSCRIPTIONS SECTION -->
+        <div id="subscriptions" class="section">
+            <div class="section-header">
+                <div>
+                    <h2>Gerenciamento de Assinaturas</h2>
+                    <p style="margin-top: 0.5rem; color: var(--text-secondary);">Controle de pagamentos e planos</p>
                 </div>
+                <button class="btn btn-primary">+ Nova Assinatura</button>
             </div>
-
-            <!-- Subscriptions Section -->
-            <div id="subscriptions" class="content-section">
-                <h2>💰 Gestão de Assinaturas</h2>
-                
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h3>Free Users</h3>
-                        <div class="value" id="freeUsers">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Premium Users</h3>
-                        <div class="value" id="premiumUsers">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Pro Users</h3>
-                        <div class="value" id="proUsers">0</div>
-                    </div>
-                </div>
-
-                <div class="data-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Usuário</th>
-                                <th>Plano</th>
-                                <th>Valor</th>
-                                <th>Início</th>
-                                <th>Vencimento</th>
-                                <th>Status</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="subscriptionsTable">
-                            <tr>
-                                <td colspan="7">🔄 Carregando assinaturas...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+            <div id="subscriptionsList">
+                <div class="loading">🔄 Carregando assinaturas...</div>
             </div>
+        </div>
 
-            <!-- Queries Section -->
-            <div id="queries" class="content-section">
-                <h2>🤖 Consultas de IA</h2>
-                
-                <div class="data-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Hora</th>
-                                <th>Usuário</th>
-                                <th>Consulta</th>
-                                <th>Status</th>
-                                <th>Tempo (ms)</th>
-                                <th>Resposta</th>
-                            </tr>
-                        </thead>
-                        <tbody id="queriesTable">
-                            <tr>
-                                <td colspan="6">🔄 Carregando consultas...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+        <!-- QUERIES SECTION -->
+        <div id="queries" class="section">
+            <div class="section-header">
+                <h2>Consultas de IA</h2>
             </div>
-
-            <!-- Analytics Section -->
-            <div id="analytics" class="content-section">
-                <h2>📈 Analytics Avançadas</h2>
-                
-                <div class="charts">
-                    <div class="chart-container">
-                        <h3>🚀 Crescimento de Usuários</h3>
-                        <canvas id="growthChart" width="400" height="300"></canvas>
-                    </div>
-                    <div class="chart-container">
-                        <h3>💸 Receita por Plano</h3>
-                        <canvas id="revenueChart" width="400" height="300"></canvas>
-                    </div>
-                </div>
+            <div id="queriesList">
+                <div class="loading">🔄 Carregando consultas...</div>
             </div>
+        </div>
 
-            <!-- System Section -->
-            <div id="system" class="content-section">
-                <h2>⚙️ Status do Sistema</h2>
-                
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h3>API Status</h3>
-                        <div class="value" id="apiStatus">🟢 Online</div>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Database</h3>
-                        <div class="value" id="dbStatus">🟢 Conectado</div>
-                    </div>
-                    <div class="stat-card">
-                        <h3>IA Service</h3>
-                        <div class="value" id="aiStatus">🔄 Verificando...</div>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Uptime</h3>
-                        <div class="value" id="uptime">99.9%</div>
-                    </div>
+        <!-- SYSTEM SECTION -->
+        <div id="system" class="section">
+            <div class="section-header">
+                <h2>Configurações do Sistema</h2>
+            </div>
+            <div style="padding: 2rem;">
+                <div id="systemStatus">
+                    <div class="loading">🔄 Verificando status...</div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        let currentSection = 'overview';
-        let dashboardData = {};
-
-        function showSection(section) {
-            // Update sidebar
-            document.querySelectorAll('.sidebar-item').forEach(item => {
+        console.log('🚀 Admin Panel carregando...');
+        
+        // Sample data
+        let users = [
+            {id: 1, email: 'admin@aissist.com', tier: 'pro', status: true, created_at: '2026-02-01', daily_usage: 15},
+            {id: 2, email: 'user@test.com', tier: 'free', status: true, created_at: '2026-02-15', daily_usage: 4},
+            {id: 3, email: 'premium@user.com', tier: 'premium', status: true, created_at: '2026-02-10', daily_usage: 25}
+        ];
+        
+        let currentEditingUser = null;
+        
+        // Theme management
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            console.log('Theme changed to:', newTheme);
+        }
+        
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.body.setAttribute('data-theme', savedTheme);
+        
+        // Navigation
+        function showSection(sectionName) {
+            console.log('Showing section:', sectionName);
+            
+            // Update nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
                 item.classList.remove('active');
             });
-            event.target.classList.add('active');
-
-            // Update content
-            document.querySelectorAll('.content-section').forEach(section => {
+            document.querySelector(`[data-section="${sectionName}"]`).classList.add('active');
+            
+            // Update sections
+            document.querySelectorAll('.section').forEach(section => {
                 section.classList.remove('active');
             });
-            document.getElementById(section).classList.add('active');
-
-            currentSection = section;
-            loadSectionData(section);
-        }
-
-        async function loadSectionData(section) {
-            showLoading(true);
-
-            try {
-                switch(section) {
-                    case 'overview':
-                        await loadOverviewData();
-                        break;
-                    case 'users':
-                        await loadUsersData();
-                        break;
-                    case 'subscriptions':
-                        await loadSubscriptionsData();
-                        break;
-                    case 'queries':
-                        await loadQueriesData();
-                        break;
-                    case 'system':
-                        await loadSystemData();
-                        break;
-                }
-                hideError();
-            } catch (error) {
-                showError(`Erro ao carregar dados: ${error.message}`);
-            } finally {
-                showLoading(false);
+            document.getElementById(sectionName).classList.add('active');
+            
+            // Load section data
+            switch(sectionName) {
+                case 'users': loadUsers(); break;
+                case 'subscriptions': loadSubscriptions(); break;
+                case 'queries': loadQueries(); break;
+                case 'analytics': loadAnalytics(); break;
+                case 'system': loadSystemStatus(); break;
             }
         }
-
-        async function loadOverviewData() {
-            // Simulate API calls - will be replaced with real data
-            await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Users management
+        function loadUsers() {
+            console.log('Loading users...');
+            renderUsers(users);
+        }
+        
+        function renderUsers(usersList) {
+            const container = document.getElementById('usersList');
             
-            document.getElementById('totalUsers').textContent = Math.floor(Math.random() * 150) + 25;
-            document.getElementById('activeSubscriptions').textContent = Math.floor(Math.random() * 15) + 5;
-            document.getElementById('todayQueries').textContent = Math.floor(Math.random() * 500) + 100;
-            document.getElementById('monthlyRevenue').textContent = (Math.random() * 2000 + 500).toFixed(2);
-        }
-
-        async function loadUsersData() {
-            const tbody = document.getElementById('usersTable');
-            tbody.innerHTML = '';
-
-            // Mock data - will be replaced with real API call
-            const users = [
-                {id: 1, email: 'admin@aissist.com', plan: 'Pro', usage: '15/500', signup: '2026-02-01', status: 'active'},
-                {id: 2, email: 'user@test.com', plan: 'Free', usage: '4/5', signup: '2026-02-15', status: 'active'},
-                {id: 3, email: 'premium@user.com', plan: 'Premium', usage: '25/100', signup: '2026-02-10', status: 'active'},
-            ];
-
-            users.forEach(user => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${user.id}</td>
-                    <td>${user.email}</td>
-                    <td><span class="status-badge status-${user.plan.toLowerCase()}">${user.plan}</span></td>
-                    <td>${user.usage}</td>
-                    <td>${user.signup}</td>
-                    <td><span class="status-badge status-${user.status}">${user.status}</span></td>
-                    <td>
-                        <button class="btn btn-primary" onclick="editUser(${user.id})">Editar</button>
-                        <button class="btn btn-danger" onclick="deleteUser(${user.id})">Deletar</button>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
-
-        async function loadSubscriptionsData() {
-            document.getElementById('freeUsers').textContent = Math.floor(Math.random() * 100) + 50;
-            document.getElementById('premiumUsers').textContent = Math.floor(Math.random() * 20) + 10;
-            document.getElementById('proUsers').textContent = Math.floor(Math.random() * 10) + 3;
-
-            // Load subscriptions table
-            const tbody = document.getElementById('subscriptionsTable');
-            tbody.innerHTML = '<tr><td colspan="7">Dados carregados com sucesso!</td></tr>';
-        }
-
-        async function loadQueriesData() {
-            const tbody = document.getElementById('queriesTable');
-            tbody.innerHTML = '';
-
-            // Mock recent queries
-            const queries = [
-                {time: '2026-02-18 01:15', user: 'user@test.com', query: 'filmes de ação sem violência', status: 'success', time_ms: 1250, response: 'Recomendação completa gerada'},
-                {time: '2026-02-18 01:10', user: 'admin@aissist.com', query: 'séries de comédia romântica', status: 'success', time_ms: 950, response: 'Lista personalizada criada'},
-            ];
-
-            queries.forEach(query => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${query.time}</td>
-                    <td>${query.user}</td>
-                    <td>${query.query.substring(0, 50)}...</td>
-                    <td><span class="status-badge status-${query.status}">${query.status}</span></td>
-                    <td>${query.time_ms}ms</td>
-                    <td>${query.response}</td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
-
-        async function loadSystemData() {
-            document.getElementById('aiStatus').textContent = '🟢 Online';
+            if (usersList.length === 0) {
+                container.innerHTML = '<div class="loading">Nenhum usuário encontrado</div>';
+                return;
+            }
             
-            // Check AI service
-            try {
-                const response = await fetch('/ai/status');
-                const status = await response.json();
-                if (status.healthy) {
-                    document.getElementById('aiStatus').textContent = '🟢 Online';
-                } else {
-                    document.getElementById('aiStatus').textContent = '🔴 Offline';
-                }
-            } catch {
-                document.getElementById('aiStatus').textContent = '⚠️ Erro';
+            const html = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Email</th>
+                            <th>Plano</th>
+                            <th>Status</th>
+                            <th>Uso Diário</th>
+                            <th>Cadastro</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${usersList.map(user => `
+                            <tr>
+                                <td>${user.id}</td>
+                                <td>${user.email}</td>
+                                <td><span class="status-badge status-${user.tier}">${user.tier.toUpperCase()}</span></td>
+                                <td><span class="status-badge status-${user.status ? 'active' : 'inactive'}">${user.status ? 'Ativo' : 'Inativo'}</span></td>
+                                <td>${user.daily_usage}</td>
+                                <td>${user.created_at}</td>
+                                <td>
+                                    <div class="actions">
+                                        <button class="btn btn-primary" onclick="editUser(${user.id})">Editar</button>
+                                        <button class="btn btn-danger" onclick="deleteUser(${user.id})">Deletar</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        function showUserForm(user = null) {
+            console.log('Showing user form:', user);
+            document.getElementById('userForm').classList.add('active');
+            document.getElementById('usersList').style.display = 'none';
+            
+            if (user) {
+                document.getElementById('userFormTitle').textContent = 'Editar Usuário';
+                document.getElementById('userId').value = user.id;
+                document.getElementById('userEmail').value = user.email;
+                document.getElementById('userTier').value = user.tier;
+                document.getElementById('userStatus').value = user.status.toString();
+                currentEditingUser = user;
+            } else {
+                document.getElementById('userFormTitle').textContent = 'Novo Usuário';
+                document.getElementById('userFormElement').reset();
+                document.getElementById('userId').value = '';
+                currentEditingUser = null;
             }
         }
-
+        
+        function hideUserForm() {
+            document.getElementById('userForm').classList.remove('active');
+            document.getElementById('usersList').style.display = 'block';
+        }
+        
         function editUser(id) {
-            alert(`Editar usuário ID: ${id} (funcionalidade em desenvolvimento)`);
-        }
-
-        function deleteUser(id) {
-            if (confirm(`Deletar usuário ID: ${id}? Esta ação não pode ser desfeita.`)) {
-                alert('Usuário deletado com sucesso!');
+            console.log('Editing user:', id);
+            const user = users.find(u => u.id === id);
+            if (user) {
+                showUserForm(user);
             }
         }
-
-        function showLoading(show) {
-            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        
+        function deleteUser(id) {
+            console.log('Deleting user:', id);
+            if (confirm('Tem certeza que deseja deletar este usuário? Esta ação não pode ser desfeita.')) {
+                const index = users.findIndex(u => u.id === id);
+                if (index > -1) {
+                    users.splice(index, 1);
+                    renderUsers(users);
+                    showMessage('Usuário deletado com sucesso!', 'success');
+                }
+            }
         }
-
-        function showError(message) {
-            document.getElementById('error').style.display = 'block';
-            document.getElementById('errorMessage').textContent = message;
-        }
-
-        function hideError() {
-            document.getElementById('error').style.display = 'none';
-        }
-
-        // Initialize dashboard
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('lastUpdate').textContent = new Date().toLocaleString('pt-BR');
-            loadSectionData('overview');
+        
+        function saveUser() {
+            console.log('Saving user...');
+            const email = document.getElementById('userEmail').value;
+            const password = document.getElementById('userPassword').value;
+            const tier = document.getElementById('userTier').value;
+            const status = document.getElementById('userStatus').value === 'true';
             
-            // Auto-refresh every 30 seconds
-            setInterval(() => {
-                loadSectionData(currentSection);
-                document.getElementById('lastUpdate').textContent = new Date().toLocaleString('pt-BR');
-            }, 30000);
+            if (!email) {
+                showMessage('Email é obrigatório!', 'error');
+                return;
+            }
+            
+            if (currentEditingUser) {
+                // Update existing user
+                const index = users.findIndex(u => u.id === currentEditingUser.id);
+                if (index > -1) {
+                    users[index] = {
+                        ...users[index],
+                        email,
+                        tier,
+                        status
+                    };
+                }
+                showMessage('Usuário atualizado com sucesso!', 'success');
+            } else {
+                // Create new user
+                const newUser = {
+                    id: Date.now(),
+                    email,
+                    tier,
+                    status,
+                    created_at: new Date().toISOString().split('T')[0],
+                    daily_usage: 0
+                };
+                users.push(newUser);
+                showMessage('Usuário criado com sucesso!', 'success');
+            }
+            
+            renderUsers(users);
+            hideUserForm();
+        }
+        
+        function filterUsers() {
+            const search = document.getElementById('userSearch').value.toLowerCase();
+            const filtered = users.filter(user => 
+                user.email.toLowerCase().includes(search)
+            );
+            renderUsers(filtered);
+        }
+        
+        function loadSubscriptions() {
+            const container = document.getElementById('subscriptionsList');
+            container.innerHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuário</th>
+                            <th>Plano</th>
+                            <th>Valor</th>
+                            <th>Status</th>
+                            <th>Criado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>premium@user.com</td>
+                            <td><span class="status-badge status-premium">PREMIUM</span></td>
+                            <td>R$ 19,90</td>
+                            <td><span class="status-badge status-active">ATIVO</span></td>
+                            <td>2026-02-10</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+        }
+        
+        function loadQueries() {
+            const container = document.getElementById('queriesList');
+            container.innerHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuário</th>
+                            <th>Consulta</th>
+                            <th>Status</th>
+                            <th>Tempo (ms)</th>
+                            <th>Data</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>user@test.com</td>
+                            <td>filmes de suspense sem gore</td>
+                            <td><span class="status-badge status-active">SUCCESS</span></td>
+                            <td>1250</td>
+                            <td>2026-02-18 01:15</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+        }
+        
+        function loadAnalytics() {
+            document.getElementById('totalUsers').textContent = users.length;
+            document.getElementById('activeSubscriptions').textContent = '2';
+            document.getElementById('totalQueries').textContent = '12';
+            document.getElementById('monthlyRevenue').textContent = 'R$ 59,80';
+        }
+        
+        function loadSystemStatus() {
+            const container = document.getElementById('systemStatus');
+            container.innerHTML = `
+                <div style="display: grid; gap: 1rem;">
+                    <div style="display: flex; justify-content: space-between; padding: 1rem; background: var(--bg-tertiary); border-radius: 6px; border: 1px solid var(--border);">
+                        <span>Database PostgreSQL</span>
+                        <span style="color: var(--success);">🟢 Connected</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 1rem; background: var(--bg-tertiary); border-radius: 6px; border: 1px solid var(--border);">
+                        <span>IA Service (ReViva LLM)</span>
+                        <span style="color: var(--success);">🟢 Online</span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function showMessage(message, type = 'success') {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type;
+            messageDiv.textContent = message;
+            messageDiv.style.position = 'fixed';
+            messageDiv.style.top = '20px';
+            messageDiv.style.right = '20px';
+            messageDiv.style.zIndex = '9999';
+            messageDiv.style.padding = '1rem 1.5rem';
+            messageDiv.style.borderRadius = '6px';
+            messageDiv.style.maxWidth = '400px';
+            
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 3000);
+        }
+        
+        function switchToDemo() {
+            console.log('Switching to demo...');
+            if (confirm('Alternar para Demo Original? Você pode voltar clicando em "Voltar ao Admin".')) {
+                const demoHTML = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIssist - Demo Original</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+            margin: 0;
+            padding: 2rem;
+        }
+        .back-btn {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .header {
+            text-align: center;
+            margin: 4rem auto 3rem;
+            max-width: 800px;
+        }
+        .header h1 {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .demo-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease;
+        }
+        .demo-card:hover {
+            transform: translateY(-5px);
+        }
+        .demo-card h3 {
+            color: #00d4ff;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <button class="back-btn" onclick="location.reload()">← Voltar ao Admin</button>
+    
+    <div class="header">
+        <h1>🎬 AIssist</h1>
+        <p style="font-size: 1.5rem; opacity: 0.9;">Sistema Inteligente de Recomendações</p>
+    </div>
+
+    <div class="demo-grid">
+        <div class="demo-card">
+            <h3>🤖 IA Conversacional</h3>
+            <p>Sistema inteligente de recomendações personalizadas usando ReViva LLM.</p>
+        </div>
+        <div class="demo-card">
+            <h3>💰 Planos Disponíveis</h3>
+            <p>Free (5/dia), Premium (R$ 19,90), Pro (R$ 39,90)</p>
+        </div>
+        <div class="demo-card">
+            <h3>📊 Métricas</h3>
+            <p>Usuários: ${users.length}, Queries: 847, Conversão: 18.3%</p>
+        </div>
+        <div class="demo-card">
+            <h3>⚡ Status</h3>
+            <p>🟢 Database: Online<br>🟢 IA: Funcionando<br>🟢 API: Ativo</p>
+        </div>
+    </div>
+</body>
+</html>`;
+                document.open();
+                document.write(demoHTML);
+                document.close();
+            }
+        }
+        
+        // Initialize on DOM ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing...');
+            
+            // Add nav click handlers
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const section = this.getAttribute('data-section');
+                    showSection(section);
+                });
+            });
+            
+            // Add form submit handler
+            document.getElementById('userFormElement').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveUser();
+            });
+            
+            // Add search handler
+            document.getElementById('userSearch').addEventListener('keyup', filterUsers);
+            
+            // Load initial data
+            loadUsers();
+            
+            console.log('✅ Admin Panel inicializado com sucesso!');
         });
     </script>
 </body>

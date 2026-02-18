@@ -623,7 +623,7 @@
     </footer>
 
     <!-- Admin Link -->
-    <a href="#" class="admin-link" onclick="goToAdmin()" title="Admin Panel">⚙️</a>
+    <a href="/admin.html" class="admin-link" title="Admin Panel">⚙️</a>
 
     <script>
         // Movie data (usando capas reais de filmes populares)
@@ -703,27 +703,36 @@
             responseArea.scrollIntoView({ behavior: 'smooth' });
 
             try {
-                // Simulated AI response
-                setTimeout(() => {
-                    const response = `🎬 <strong>Baseado em:</strong> "${query}"
+                // Use real AI with authentication
+                const result = await auth.sendAIQuery(query);
+                
+                if (result.success) {
+                    responseText.innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit; line-height: 1.8; color: #fff;">🎬 <strong>Recomendações da IA:</strong>
+                    
+${result.response}
 
-<strong style="color: #e50914;">🌟 RECOMENDAÇÕES PERSONALIZADAS:</strong>
-
-• <strong>Opção Principal:</strong> [Filme específico] - Combina perfeitamente com seu pedido
-• <strong>Alternativa 1:</strong> [Segundo filme] - Similar mas com abordagem diferente  
-• <strong>Alternativa 2:</strong> [Terceiro filme] - Surpresa que você vai adorar
-
-<strong style="color: #ff6b35;">🎯 Por que essas escolhas:</strong>
-Nossa IA analisou seu pedido considerando gênero, tom, qualidade e avaliações. Cada sugestão foi selecionada com 96% de confiança baseada em usuários com perfil similar.
-
-<strong>⭐ Nota média das recomendações:</strong> 8.7/10
-<strong>🔥 Popularidade:</strong> Alta entre cinéfilos
-
-<strong style="color: #ffd700;">🚀 Quer recomendações ainda mais precisas?</strong>
-Cadastre-se para acessar IA avançada, histórico personalizado e listas exclusivas!`;
-
-                    responseText.innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit; line-height: 1.8; color: #fff;">${response}</pre>`;
-                }, 3000);
+<strong style="color: #ffd700;">💡 Dica:</strong> ${auth.isLoggedIn() ? 'Continue explorando!' : 'Cadastre-se para recomendações mais precisas!'}</pre>`;
+                } else {
+                    if (result.error.includes('rate limit') || result.error.includes('limite')) {
+                        responseText.innerHTML = `<div style="color: #ffc107;">
+⚠️ <strong>Limite de consultas atingido!</strong><br><br>
+${auth.isLoggedIn() ? 
+    `Você atingiu o limite do plano ${auth.user.subscription_tier.toUpperCase()}.<br>
+    💎 <strong>Faça upgrade para mais consultas:</strong><br>
+    • Premium: 100/dia por R$ 19/mês<br>
+    • Pro: 500/dia por R$ 39/mês` :
+    `Como visitante, você tem acesso limitado.<br>
+    🚀 <strong>Cadastre-se grátis para ganhar:</strong><br>
+    • 5 consultas por dia<br>
+    • Recomendações personalizadas<br>
+    • Histórico de consultas`
+}
+                        </div>`;
+                    } else {
+                        responseText.innerHTML = `❌ <strong>Erro:</strong> ${result.error}<br><br>
+${!auth.isLoggedIn() ? '💡 <strong>Dica:</strong> Faça login para acesso completo à IA!' : ''}`;
+                    }
+                }
 
             } catch (error) {
                 responseText.innerHTML = '❌ <strong>Ops!</strong> Erro na conexão. Tente novamente em alguns instantes.';
@@ -736,16 +745,191 @@ Cadastre-se para acessar IA avançada, histórico personalizado e listas exclusi
             }
         }
 
-        // Auth functions
-        function showLogin() {
-            // TODO: Implementar modal de login real
-            alert('🔑 Sistema de login em desenvolvimento!\n\n✨ Em breve você terá acesso a:\n• Perfil personalizado\n• Histórico completo\n• Listas favoritas\n• IA mais precisa');
+        // Modal functions
+        function showLoginModal() {
+            closeModal();
+            const modal = document.createElement('div');
+            modal.id = 'authModal';
+            modal.innerHTML = `
+                <div class="modal-overlay" onclick="closeModal()">
+                    <div class="modal-content" onclick="event.stopPropagation()">
+                        <div class="modal-header">
+                            <h2 style="color: #e50914;">🔑 Entrar</h2>
+                            <button class="modal-close" onclick="closeModal()">×</button>
+                        </div>
+                        <form id="loginForm">
+                            <div class="form-group">
+                                <label>Email:</label>
+                                <input type="email" id="loginEmail" required placeholder="seu@email.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Senha:</label>
+                                <input type="password" id="loginPassword" required placeholder="••••••••">
+                            </div>
+                            <button type="submit" class="modal-btn">🚀 Entrar</button>
+                        </form>
+                        <p class="modal-footer">
+                            Não tem conta? <a href="#" onclick="showSignupModal()">Cadastre-se grátis</a>
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            // Add modal styles
+            const styles = `
+                <style>
+                .modal-overlay {
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                    background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(10px);
+                    display: flex; align-items: center; justify-content: center; z-index: 10000;
+                }
+                .modal-content {
+                    background: #111; border-radius: 15px; padding: 2rem;
+                    max-width: 400px; width: 90%; border: 1px solid rgba(255, 255, 255, 0.1);
+                }
+                .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+                .modal-close { background: none; border: none; color: #fff; font-size: 2rem; cursor: pointer; }
+                .form-group { margin-bottom: 1.5rem; }
+                .form-group label { display: block; margin-bottom: 0.5rem; color: #fff; }
+                .form-group input { width: 100%; padding: 0.75rem; border: 1px solid rgba(255, 255, 255, 0.2);
+                    border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: #fff; font-size: 1rem; }
+                .modal-btn { width: 100%; padding: 1rem; background: #e50914; border: none; border-radius: 6px;
+                    color: #fff; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: background 0.3s; }
+                .modal-btn:hover { background: #f40612; }
+                .modal-footer { text-align: center; margin-top: 1rem; color: #ccc; }
+                .modal-footer a { color: #e50914; text-decoration: none; }
+                </style>
+            `;
+            
+            document.head.insertAdjacentHTML('beforeend', styles);
+            document.body.appendChild(modal);
+            
+            document.getElementById('loginForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+                
+                const btn = e.target.querySelector('.modal-btn');
+                btn.textContent = '⏳ Entrando...';
+                btn.disabled = true;
+                
+                const result = await auth.login(email, password);
+                
+                if (result.success) {
+                    closeModal();
+                    auth.updateUI();
+                    showMessage(`✅ Bem-vindo, ${result.user.email}! Plano: ${result.user.subscription_tier.toUpperCase()}`, 'success');
+                } else {
+                    showMessage(`❌ ${result.error}`, 'error');
+                    btn.textContent = '🚀 Entrar';
+                    btn.disabled = false;
+                }
+            });
+            
+            document.getElementById('loginEmail').focus();
         }
 
-        function showSignup() {
-            // TODO: Implementar modal de cadastro real
-            alert('🚀 Sistema de cadastro em desenvolvimento!\n\n✨ Em breve você poderá:\n• Criar conta gratuita\n• Personalizar preferências\n• Histórico de consultas\n• Upgrade para Premium');
+        function showSignupModal() {
+            closeModal();
+            const modal = document.createElement('div');
+            modal.id = 'authModal';
+            modal.innerHTML = `
+                <div class="modal-overlay" onclick="closeModal()">
+                    <div class="modal-content" onclick="event.stopPropagation()">
+                        <div class="modal-header">
+                            <h2 style="color: #e50914;">🚀 Cadastrar</h2>
+                            <button class="modal-close" onclick="closeModal()">×</button>
+                        </div>
+                        <form id="signupForm">
+                            <div class="form-group">
+                                <label>Email:</label>
+                                <input type="email" id="signupEmail" required placeholder="seu@email.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Senha:</label>
+                                <input type="password" id="signupPassword" required minlength="6" placeholder="Min. 6 caracteres">
+                            </div>
+                            <div class="form-group">
+                                <label>Plano:</label>
+                                <select id="signupTier" style="width: 100%; padding: 0.75rem; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: #fff;">
+                                    <option value="free">🆓 Free - 5 consultas/dia</option>
+                                    <option value="premium">💎 Premium - R$ 19/mês (100/dia)</option>
+                                    <option value="pro">🚀 Pro - R$ 39/mês (500/dia)</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="modal-btn">✨ Criar Conta</button>
+                        </form>
+                        <p class="modal-footer">
+                            Já tem conta? <a href="#" onclick="showLoginModal()">Entre aqui</a>
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            document.getElementById('signupForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('signupEmail').value;
+                const password = document.getElementById('signupPassword').value;
+                const tier = document.getElementById('signupTier').value;
+                
+                const btn = e.target.querySelector('.modal-btn');
+                btn.textContent = '⏳ Criando...';
+                btn.disabled = true;
+                
+                const result = await auth.signup(email, password, tier);
+                
+                if (result.success) {
+                    closeModal();
+                    auth.updateUI();
+                    showMessage(`✅ Conta criada! Bem-vindo, ${result.user.email}! Plano: ${tier.toUpperCase()}`, 'success');
+                } else {
+                    showMessage(`❌ ${result.error}`, 'error');
+                    btn.textContent = '✨ Criar Conta';
+                    btn.disabled = false;
+                }
+            });
+            
+            document.getElementById('signupEmail').focus();
         }
+        
+        function closeModal() {
+            const modal = document.getElementById('authModal');
+            if (modal) modal.remove();
+        }
+        
+        function showUserProfile() {
+            if (!auth.isLoggedIn()) return;
+            
+            const user = auth.user;
+            const planLimits = {
+                free: '5 consultas/dia',
+                premium: '100 consultas/dia', 
+                pro: '500 consultas/dia'
+            };
+            
+            alert(`👤 Perfil do Usuário\n\n📧 Email: ${user.email}\n💎 Plano: ${user.subscription_tier.toUpperCase()}\n📊 Limite: ${planLimits[user.subscription_tier]}\n🔄 Uso hoje: ${user.daily_usage_count || 0}\n📅 Membro desde: ${new Date(user.created_at).toLocaleDateString('pt-BR')}`);
+        }
+        
+        function showMessage(message, type = 'success') {
+            const messageDiv = document.createElement('div');
+            messageDiv.style.cssText = `
+                position: fixed; top: 20px; right: 20px; z-index: 10001;
+                padding: 1rem 1.5rem; border-radius: 8px; max-width: 400px;
+                color: #fff; font-weight: 600;
+                background: ${type === 'success' ? '#10b981' : '#ef4444'};
+                box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            `;
+            messageDiv.textContent = message;
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => messageDiv.remove(), 4000);
+        }
+        
+        // Override existing auth functions
+        function showLogin() { showLoginModal(); }
+        function showSignup() { showSignupModal(); }
 
         function choosePlan(plan) {
             const plans = {
@@ -757,8 +941,151 @@ Cadastre-se para acessar IA avançada, histórico personalizado e listas exclusi
         }
 
         function goToAdmin() {
-            window.location.href = '/admin';
+            window.location.href = '/admin.html';
         }
+        
+        // AUTH INTEGRATION INLINE
+        class AuthManager {
+            constructor() {
+                this.baseURL = 'https://aissist.rafante-tec.online';
+                this.token = localStorage.getItem('auth_token');
+                this.user = JSON.parse(localStorage.getItem('user_data') || 'null');
+                
+                if (this.token) {
+                    this.validateToken();
+                }
+            }
+            
+            async login(email, password) {
+                try {
+                    const response = await fetch(`${this.baseURL}/auth/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        this.token = data.token;
+                        this.user = data.user;
+                        localStorage.setItem('auth_token', this.token);
+                        localStorage.setItem('user_data', JSON.stringify(this.user));
+                        return { success: true, user: this.user };
+                    } else {
+                        return { success: false, error: data.error || 'Erro de login' };
+                    }
+                } catch (error) {
+                    return { success: false, error: 'Erro de conexão' };
+                }
+            }
+            
+            async signup(email, password, tier = 'free') {
+                try {
+                    const response = await fetch(`${this.baseURL}/auth/signup`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password, subscription_tier: tier })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        this.token = data.token;
+                        this.user = data.user;
+                        localStorage.setItem('auth_token', this.token);
+                        localStorage.setItem('user_data', JSON.stringify(this.user));
+                        return { success: true, user: this.user };
+                    } else {
+                        return { success: false, error: data.error || 'Erro de cadastro' };
+                    }
+                } catch (error) {
+                    return { success: false, error: 'Erro de conexão' };
+                }
+            }
+            
+            async validateToken() {
+                if (!this.token) return false;
+                
+                try {
+                    const response = await fetch(`${this.baseURL}/auth/me`, {
+                        headers: { 'Authorization': `Bearer ${this.token}` }
+                    });
+                    
+                    if (response.ok) {
+                        const userData = await response.json();
+                        this.user = userData;
+                        localStorage.setItem('user_data', JSON.stringify(this.user));
+                        return true;
+                    } else {
+                        this.logout();
+                        return false;
+                    }
+                } catch (error) {
+                    this.logout();
+                    return false;
+                }
+            }
+            
+            logout() {
+                this.token = null;
+                this.user = null;
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('user_data');
+                this.updateUI();
+            }
+            
+            isLoggedIn() {
+                return !!(this.token && this.user);
+            }
+            
+            async sendAIQuery(query) {
+                try {
+                    const headers = { 'Content-Type': 'application/json' };
+                    
+                    if (this.token) {
+                        headers['Authorization'] = `Bearer ${this.token}`;
+                    }
+                    
+                    const response = await fetch(`${this.baseURL}/ai/chat`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({ message: query })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        return { success: true, response: data.response };
+                    } else {
+                        return { success: false, error: data.error || 'Erro da IA' };
+                    }
+                } catch (error) {
+                    return { success: false, error: 'Erro de conexão com IA' };
+                }
+            }
+            
+            updateUI() {
+                const authButtons = document.querySelector('.auth-buttons');
+                if (!authButtons) return;
+                
+                if (this.isLoggedIn()) {
+                    authButtons.innerHTML = `
+                        <span style="margin-right: 1rem; opacity: 0.9;">👋 ${this.user.email}</span>
+                        <button class="btn-login" onclick="showUserProfile()">💎 ${this.user.subscription_tier.toUpperCase()}</button>
+                        <button class="btn-signup" onclick="auth.logout()">Sair</button>
+                    `;
+                } else {
+                    authButtons.innerHTML = `
+                        <button class="btn-login" onclick="showLoginModal()">Entrar</button>
+                        <button class="btn-signup" onclick="showSignupModal()">Cadastrar</button>
+                    `;
+                }
+            }
+        }
+        
+        // Global auth instance
+        const auth = new AuthManager();
 
         // Header scroll effect
         window.addEventListener('scroll', () => {
@@ -774,7 +1101,12 @@ Cadastre-se para acessar IA avançada, histórico personalizado e listas exclusi
         document.addEventListener('DOMContentLoaded', function() {
             loadMovieCarousels();
             document.getElementById('heroSearch').focus();
+            
+            // Initialize auth UI
+            auth.updateUI();
+            
             console.log('🎬 AIssist Netflix-style carregado com sucesso!');
+            console.log('🔐 Auth status:', auth.isLoggedIn() ? 'Logado como ' + auth.user?.email : 'Não logado');
         });
     </script>
 </body>
