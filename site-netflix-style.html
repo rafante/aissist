@@ -623,7 +623,7 @@
     </footer>
 
     <!-- Admin Link -->
-    <a href="/admin.html" class="admin-link" title="Admin Panel">⚙️</a>
+    <a href="?admin=true" class="admin-link" title="Admin Panel">⚙️</a>
 
     <script>
         // Movie data (usando capas reais de filmes populares)
@@ -1097,8 +1097,117 @@ ${!auth.isLoggedIn() ? '💡 <strong>Dica:</strong> Faça login para acesso comp
             }
         });
 
+        // Check if should load admin panel
+        function checkAdminMode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('admin') === 'true') {
+                loadAdminPanel();
+                return true;
+            }
+            return false;
+        }
+        
+        function loadAdminPanel() {
+            // Replace entire body content with admin panel
+            document.body.innerHTML = `
+                <div style="background: #1a1a1a; color: #fff; min-height: 100vh; padding: 2rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding: 1rem; background: #2d2d2d; border-radius: 8px;">
+                        <h1 style="color: #e50914;">🎬 AIssist - Admin Panel</h1>
+                        <div>
+                            <button onclick="location.href='/demo.html'" style="background: #333; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 4px; margin-right: 1rem; cursor: pointer;">← Voltar ao Site</button>
+                            <span style="opacity: 0.8;">Admin: bruno@aissist.com</span>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+                        <div style="background: #2d2d2d; padding: 2rem; border-radius: 8px;">
+                            <h3 style="color: #e50914; margin-bottom: 1rem;">👥 Gerenciar Usuários</h3>
+                            <p style="margin-bottom: 1rem; opacity: 0.8;">Visualizar, editar e gerenciar contas de usuários</p>
+                            <div style="background: #333; padding: 1rem; border-radius: 4px; margin: 1rem 0;">
+                                <strong>Total de usuários:</strong> 127<br>
+                                <strong>Novos hoje:</strong> 12<br>
+                                <strong>Ativos (7 dias):</strong> 89
+                            </div>
+                            <button style="background: #e50914; color: #fff; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; width: 100%;">Ver Todos os Usuários</button>
+                        </div>
+                        
+                        <div style="background: #2d2d2d; padding: 2rem; border-radius: 8px;">
+                            <h3 style="color: #e50914; margin-bottom: 1rem;">💰 Assinaturas</h3>
+                            <p style="margin-bottom: 1rem; opacity: 0.8;">Controle de pagamentos e upgrades</p>
+                            <div style="background: #333; padding: 1rem; border-radius: 4px; margin: 1rem 0;">
+                                <strong>Free:</strong> 95 usuários<br>
+                                <strong>Premium:</strong> 28 usuários<br>
+                                <strong>Pro:</strong> 4 usuários<br>
+                                <strong>Receita/mês:</strong> R$ 1.476,00
+                            </div>
+                            <button style="background: #e50914; color: #fff; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; width: 100%;">Gerenciar Assinaturas</button>
+                        </div>
+                        
+                        <div style="background: #2d2d2d; padding: 2rem; border-radius: 8px;">
+                            <h3 style="color: #e50914; margin-bottom: 1rem;">🤖 Consultas IA</h3>
+                            <p style="margin-bottom: 1rem; opacity: 0.8;">Monitoramento de uso da IA</p>
+                            <div style="background: #333; padding: 1rem; border-radius: 4px; margin: 1rem 0;">
+                                <strong>Hoje:</strong> 847 consultas<br>
+                                <strong>Esta semana:</strong> 5.234<br>
+                                <strong>Tempo médio:</strong> 1.2s<br>
+                                <strong>Taxa sucesso:</strong> 98.7%
+                            </div>
+                            <button style="background: #e50914; color: #fff; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; width: 100%;">Ver Logs Detalhados</button>
+                        </div>
+                        
+                        <div style="background: #2d2d2d; padding: 2rem; border-radius: 8px;">
+                            <h3 style="color: #e50914; margin-bottom: 1rem;">📊 Analytics</h3>
+                            <p style="margin-bottom: 1rem; opacity: 0.8;">Métricas de crescimento e conversão</p>
+                            <div style="background: #333; padding: 1rem; border-radius: 4px; margin: 1rem 0;">
+                                <strong>Conversão Free→Premium:</strong> 18.3%<br>
+                                <strong>Retenção 30 dias:</strong> 67%<br>
+                                <strong>NPS Score:</strong> 8.4/10<br>
+                                <strong>Crescimento mensal:</strong> +23%
+                            </div>
+                            <button style="background: #e50914; color: #fff; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; width: 100%;">Dashboard Completo</button>
+                        </div>
+                        
+                        <div style="background: #2d2d2d; padding: 2rem; border-radius: 8px;">
+                            <h3 style="color: #e50914; margin-bottom: 1rem;">⚙️ Sistema</h3>
+                            <p style="margin-bottom: 1rem; opacity: 0.8;">Status dos serviços</p>
+                            <div style="background: #333; padding: 1rem; border-radius: 4px; margin: 1rem 0;">
+                                <span style="color: #00ff88;">🟢</span> <strong>Database:</strong> OK<br>
+                                <span style="color: #00ff88;">🟢</span> <strong>IA Service:</strong> OK<br>
+                                <span style="color: #00ff88;">🟢</span> <strong>API Gateway:</strong> OK<br>
+                                <span style="color: #ffc107;">🟡</span> <strong>Deploy:</strong> Coolify Issues
+                            </div>
+                            <button style="background: #e50914; color: #fff; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; width: 100%;">Logs do Sistema</button>
+                        </div>
+                        
+                        <div style="background: #2d2d2d; padding: 2rem; border-radius: 8px;">
+                            <h3 style="color: #e50914; margin-bottom: 1rem;">🛠️ Ações Rápidas</h3>
+                            <p style="margin-bottom: 1rem; opacity: 0.8;">Ferramentas administrativas</p>
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                <button style="background: #333; color: #fff; border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer;">🔄 Reiniciar Serviços</button>
+                                <button style="background: #333; color: #fff; border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer;">📧 Enviar Newsletter</button>
+                                <button style="background: #333; color: #fff; border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer;">🗃️ Backup Database</button>
+                                <button style="background: #333; color: #fff; border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer;">📊 Exportar Relatório</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 3rem; opacity: 0.7;">
+                        <p>AIssist Admin Panel v1.0.0 | Última atualização: ${new Date().toLocaleString('pt-BR')}</p>
+                        <p>Desenvolvido por Bruno Rafante & Maia</p>
+                    </div>
+                </div>
+            `;
+        }
+
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
+            // Check if admin mode first
+            if (checkAdminMode()) {
+                console.log('🔧 Admin Panel carregado');
+                return;
+            }
+            
+            // Normal site initialization
             loadMovieCarousels();
             document.getElementById('heroSearch').focus();
             
