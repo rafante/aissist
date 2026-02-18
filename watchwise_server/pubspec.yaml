@@ -11,6 +11,11 @@ dependencies:
   # TEMPORARILY DISABLED for initial deployment
   # serverpod_auth_idp_server: 3.3.1
   http: ^1.6.0
+  # Authentication dependencies
+  jose: ^0.3.4
+  crypto: ^3.0.6
+  # Database support
+  postgres: ^3.1.0
 
 dev_dependencies:
   lints: '>=3.0.0 <7.0.0'
