@@ -55,6 +55,18 @@ Future<void> main() async {
         case '/ai/chat':
           await _handleAIChat(request, tmdb, llmService, query);
           break;
+        case '/auth/signup':
+          await _handleSignup(request);
+          break;
+        case '/auth/login':
+          await _handleLogin(request);
+          break;
+        case '/auth/me':
+          await _handleMe(request);
+          break;
+        case '/auth/usage':
+          await _handleUsage(request);
+          break;
         default:
           await _handle404(request);
       }
@@ -73,6 +85,10 @@ Future<void> _handleHealth(HttpRequest request) async {
       'version': '1.0',
       'endpoints': [
         '/health',
+        '/auth/signup (POST)',
+        '/auth/login (POST)',
+        '/auth/me (GET)',
+        '/auth/usage (GET)',
         '/movies/popular',
         '/movies/search?query=Matrix',
         '/tv/search?query=Friends',
@@ -266,6 +282,151 @@ Future<void> _handle404(HttpRequest request) async {
         '/tv/search?query=...'
       ]
     }));
+  await request.response.close();
+}
+
+Future<void> _handleSignup(HttpRequest request) async {
+  if (request.method != 'POST') {
+    request.response
+      ..statusCode = 405
+      ..headers.contentType = ContentType.json
+      ..write(jsonEncode({'error': 'Method not allowed. Use POST.'}));
+    await request.response.close();
+    return;
+  }
+
+  try {
+    final body = await utf8.decoder.bind(request).join();
+    final data = jsonDecode(body) as Map<String, dynamic>;
+    
+    final email = data['email'] as String?;
+    final password = data['password'] as String?;
+    final planType = data['planType'] as String? ?? 'free';
+
+    print('✅ Signup: $email, plan: $planType');
+
+    final response = {
+      'success': true,
+      'user': {
+        'id': DateTime.now().millisecondsSinceEpoch % 10000,
+        'email': email,
+        'subscriptionTier': planType,
+        'remainingQueries': planType == 'pro' ? 500 : planType == 'premium' ? 100 : 5,
+        'createdAt': DateTime.now().toIso8601String(),
+      },
+      'token': 'jwt_${DateTime.now().millisecondsSinceEpoch}_${email?.split('@')[0] ?? 'user'}',
+      'message': 'Conta criada com sucesso! Bem-vindo ao AIssist.',
+    };
+
+    request.response
+      ..headers.contentType = ContentType.json
+      ..headers.add('Access-Control-Allow-Origin', '*')
+      ..write(jsonEncode(response));
+    await request.response.close();
+  } catch (e) {
+    print('❌ Signup error: $e');
+    request.response
+      ..statusCode = 400
+      ..headers.contentType = ContentType.json
+      ..write(jsonEncode({'error': 'Invalid signup data', 'message': e.toString()}));
+    await request.response.close();
+  }
+}
+
+Future<void> _handleLogin(HttpRequest request) async {
+  if (request.method != 'POST') {
+    request.response
+      ..statusCode = 405
+      ..headers.contentType = ContentType.json
+      ..write(jsonEncode({'error': 'Method not allowed. Use POST.'}));
+    await request.response.close();
+    return;
+  }
+
+  try {
+    final body = await utf8.decoder.bind(request).join();
+    final data = jsonDecode(body) as Map<String, dynamic>;
+    
+    final email = data['email'] as String?;
+    final password = data['password'] as String?;
+
+    print('🔑 Login: $email');
+
+    final response = {
+      'success': true,
+      'user': {
+        'id': 1,
+        'email': email,
+        'subscriptionTier': 'premium',
+        'remainingQueries': 95,
+        'lastLoginAt': DateTime.now().toIso8601String(),
+      },
+      'token': 'jwt_login_${DateTime.now().millisecondsSinceEpoch}_${email?.split('@')[0] ?? 'user'}',
+      'message': 'Login realizado com sucesso!',
+    };
+
+    request.response
+      ..headers.contentType = ContentType.json
+      ..headers.add('Access-Control-Allow-Origin', '*')
+      ..write(jsonEncode(response));
+    await request.response.close();
+  } catch (e) {
+    print('❌ Login error: $e');
+    request.response
+      ..statusCode = 400
+      ..headers.contentType = ContentType.json
+      ..write(jsonEncode({'error': 'Invalid login data', 'message': e.toString()}));
+    await request.response.close();
+  }
+}
+
+Future<void> _handleMe(HttpRequest request) async {
+  final authHeader = request.headers.value('authorization');
+  if (authHeader == null || !authHeader.startsWith('Bearer ')) {
+    request.response
+      ..statusCode = 401
+      ..headers.contentType = ContentType.json
+      ..write(jsonEncode({'error': 'Authorization header required'}));
+    await request.response.close();
+    return;
+  }
+
+  final response = {
+    'success': true,
+    'user': {
+      'id': 1,
+      'email': 'demo@aissist.com',
+      'subscriptionTier': 'premium',
+      'remainingQueries': 95,
+      'totalQueries': 5,
+      'createdAt': '2026-02-18T00:00:00Z',
+      'lastLoginAt': DateTime.now().toIso8601String(),
+    }
+  };
+
+  request.response
+    ..headers.contentType = ContentType.json
+    ..headers.add('Access-Control-Allow-Origin', '*')
+    ..write(jsonEncode(response));
+  await request.response.close();
+}
+
+Future<void> _handleUsage(HttpRequest request) async {
+  final response = {
+    'success': true,
+    'usage': {
+      'todayQueries': 3,
+      'dailyLimit': 100,
+      'remainingQueries': 97,
+      'resetTime': DateTime.now().add(const Duration(days: 1)).toIso8601String(),
+      'subscriptionTier': 'premium',
+    }
+  };
+
+  request.response
+    ..headers.contentType = ContentType.json
+    ..headers.add('Access-Control-Allow-Origin', '*')
+    ..write(jsonEncode(response));
   await request.response.close();
 }
 
