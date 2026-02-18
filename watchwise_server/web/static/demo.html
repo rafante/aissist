@@ -3,193 +3,648 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIssist - Admin Dashboard</title>
+    <title>AIssist - Admin CRUD</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: white;
-            padding: 2rem;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f7fa;
+            color: #2d3748;
         }
-        .container { max-width: 1200px; margin: 0 auto; }
+        
         .header {
-            text-align: center;
-            margin-bottom: 3rem;
-            background: rgba(255,255,255,0.1);
-            padding: 2rem;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-        }
-        .header h1 { font-size: 3rem; margin-bottom: 1rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
-        .status { font-size: 1.2rem; color: #00ff88; }
-        .dashboard {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-bottom: 3rem;
-        }
-        .card {
-            background: rgba(255,255,255,0.15);
-            padding: 2rem;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2);
-            transition: transform 0.3s ease;
-        }
-        .card:hover { transform: translateY(-5px); }
-        .card h2 { font-size: 1.5rem; margin-bottom: 1rem; color: #00d4ff; }
-        .stat-value { font-size: 2.5rem; font-weight: bold; margin: 1rem 0; color: #fff; }
-        .systems {
-            background: rgba(255,255,255,0.1);
-            padding: 2rem;
-            border-radius: 15px;
-            margin-top: 2rem;
-        }
-        .system-status { 
-            display: flex; 
-            justify-content: space-between; 
-            margin: 1rem 0; 
-            padding: 1rem;
-            background: rgba(255,255,255,0.05);
-            border-radius: 8px;
-        }
-        .online { color: #00ff88; }
-        .pulse { animation: pulse 2s infinite; }
-        @keyframes pulse { 
-            0% { opacity: 1; } 
-            50% { opacity: 0.7; } 
-            100% { opacity: 1; } 
-        }
-        .success-banner {
-            background: linear-gradient(45deg, #00ff88, #00d4ff);
-            color: #000;
+            background: #1a202c;
+            color: white;
             padding: 1rem 2rem;
-            border-radius: 10px;
-            text-align: center;
-            font-weight: bold;
-            margin-bottom: 2rem;
-            animation: glow 3s ease-in-out infinite alternate;
+            display: flex;
+            justify-content: between;
+            align-items: center;
         }
-        @keyframes glow {
-            from { box-shadow: 0 0 10px #00ff88; }
-            to { box-shadow: 0 0 30px #00d4ff, 0 0 40px #00d4ff; }
+        
+        .nav {
+            background: #2d3748;
+            padding: 0;
+            display: flex;
+            border-bottom: 1px solid #e2e8f0;
         }
-        .demo-info {
-            background: rgba(0,0,0,0.2);
-            padding: 1rem;
+        
+        .nav-item {
+            padding: 1rem 2rem;
+            cursor: pointer;
+            color: #a0aec0;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .nav-item:hover, .nav-item.active {
+            background: #4a5568;
+            color: white;
+            border-bottom-color: #3182ce;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .section {
+            display: none;
+            background: white;
             border-radius: 8px;
-            margin-top: 2rem;
-            border-left: 4px solid #00d4ff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .section.active { display: block; }
+        
+        .section-header {
+            background: #f7fafc;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary { background: #3182ce; color: white; }
+        .btn-primary:hover { background: #2c5aa0; }
+        .btn-success { background: #38a169; color: white; }
+        .btn-danger { background: #e53e3e; color: white; }
+        .btn-secondary { background: #718096; color: white; }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .table th {
+            background: #f7fafc;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .table td {
+            padding: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .table tr:hover { background: #f7fafc; }
+        
+        .form {
+            padding: 2rem;
+            display: none;
+        }
+        
+        .form.active { display: block; }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #3182ce;
+            box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+        }
+        
+        .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .status-active { background: #c6f6d5; color: #22543d; }
+        .status-inactive { background: #fed7d7; color: #742a2a; }
+        .status-free { background: #e2e8f0; color: #2d3748; }
+        .status-premium { background: #fef5e7; color: #744210; }
+        .status-pro { background: #e6fffa; color: #234e52; }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #718096;
+        }
+        
+        .error {
+            background: #fed7d7;
+            color: #742a2a;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+        
+        .search-bar {
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            width: 300px;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            padding: 2rem;
+            gap: 0.5rem;
+        }
+        
+        .page-btn {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .page-btn.active {
+            background: #3182ce;
+            color: white;
+            border-color: #3182ce;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="success-banner pulse">
-            🎉 SUCESSO! Dashboard Admin Funcionando via /demo.html
-        </div>
-        
-        <div class="header">
-            <h1>🎬 AIssist Admin Dashboard</h1>
-            <div class="status pulse">✅ SISTEMA OPERACIONAL - Bypassing Deploy Issues</div>
-            <div style="font-size: 1rem; margin-top: 1rem; opacity: 0.8;">
-                Deploy: ${new Date().toLocaleString('pt-BR')} | Via: demo.html endpoint
-            </div>
-        </div>
-        
-        <div class="dashboard">
-            <div class="card">
-                <h2>👥 Usuários Ativos</h2>
-                <div class="stat-value" id="users">127</div>
-                <p>Usuários cadastrados na plataforma</p>
-                <small style="opacity: 0.7;">+15 esta semana</small>
-            </div>
-            
-            <div class="card">
-                <h2>💰 Receita Mensal</h2>
-                <div class="stat-value">R$ 1.247</div>
-                <p>Receita recorrente (MRR)</p>
-                <small style="opacity: 0.7;">+28% vs mês anterior</small>
-            </div>
-            
-            <div class="card">
-                <h2>🤖 Consultas IA</h2>
-                <div class="stat-value" id="queries">847</div>
-                <p>Consultas processadas hoje</p>
-                <small style="opacity: 0.7;">+32% vs ontem</small>
-            </div>
-            
-            <div class="card">
-                <h2>📊 Taxa Conversão</h2>
-                <div class="stat-value">18.3%</div>
-                <p>Free → Premium</p>
-                <small style="opacity: 0.7;">Acima da média do setor</small>
-            </div>
-        </div>
-        
-        <div class="systems">
-            <h2>🔧 Status dos Sistemas</h2>
-            <div class="system-status">
-                <span><strong>🗄️ Database PostgreSQL</strong></span>
-                <span class="online pulse">🟢 Online & Conectado</span>
-            </div>
-            <div class="system-status">
-                <span><strong>🤖 IA Service (ReViva LLM)</strong></span>
-                <span class="online pulse">🟢 llm.rafante-tec.online</span>
-            </div>
-            <div class="system-status">
-                <span><strong>🌐 API Gateway</strong></span>
-                <span class="online pulse">🟢 Todos endpoints ativos</span>
-            </div>
-            <div class="system-status">
-                <span><strong>💳 Payment System</strong></span>
-                <span class="online pulse">🟢 Stripe/PagSeguro Ready</span>
-            </div>
-            <div class="system-status">
-                <span><strong>📊 Analytics</strong></span>
-                <span class="online pulse">🟢 Tracking & Metrics</span>
-            </div>
-        </div>
-        
-        <div class="demo-info">
-            <h3>🎯 Dashboard Administrativo Funcional</h3>
-            <p><strong>✅ Interface:</strong> Dashboard completo com estatísticas em tempo real</p>
-            <p><strong>✅ Sistemas:</strong> Monitoramento de todos os serviços</p>
-            <p><strong>✅ Dados:</strong> Métricas de usuários, receita e performance</p>
-            <p><strong>✅ Design:</strong> Interface moderna com animações e gradientes</p>
-            <br>
-            <p><strong>🔄 Workaround:</strong> Usando endpoint /demo.html (funcional) em vez de /admin (deploy issue)</p>
-            <p><strong>⚡ Performance:</strong> Dashboard carregando e funcionando perfeitamente</p>
+    <div class="header">
+        <h1>🎬 AIssist - Admin Panel</h1>
+        <div>
+            <span>Admin: bruno@aissist.com</span>
+            <button class="btn btn-secondary" style="margin-left: 1rem;">Logout</button>
         </div>
     </div>
-    
-    <script>
-        // Update stats in real time
-        let userCount = 127;
-        let queryCount = 847;
-        
-        setInterval(() => {
-            userCount += Math.floor(Math.random() * 3);
-            queryCount += Math.floor(Math.random() * 8) + 2;
+
+    <div class="nav">
+        <div class="nav-item active" onclick="showSection('users')">👥 Usuários</div>
+        <div class="nav-item" onclick="showSection('subscriptions')">💰 Assinaturas</div>
+        <div class="nav-item" onclick="showSection('queries')">🤖 Consultas IA</div>
+        <div class="nav-item" onclick="showSection('analytics')">📊 Analytics</div>
+        <div class="nav-item" onclick="showSection('system')">⚙️ Sistema</div>
+    </div>
+
+    <div class="container">
+        <!-- USERS SECTION -->
+        <div id="users" class="section active">
+            <div class="section-header">
+                <div>
+                    <h2>Gerenciamento de Usuários</h2>
+                    <p>Adicionar, editar e remover usuários da plataforma</p>
+                </div>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <input type="text" class="search-bar" placeholder="Buscar usuários..." id="userSearch" onkeyup="filterUsers()">
+                    <button class="btn btn-primary" onclick="showUserForm()">+ Novo Usuário</button>
+                </div>
+            </div>
+
+            <div id="usersList">
+                <div class="loading">🔄 Carregando usuários...</div>
+            </div>
+
+            <div id="userForm" class="form">
+                <h3 id="userFormTitle">Novo Usuário</h3>
+                <form onsubmit="saveUser(event)">
+                    <input type="hidden" id="userId" value="">
+                    
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="userEmail" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-input" id="userPassword">
+                        <small>Deixe em branco para manter senha atual</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Plano</label>
+                        <select class="form-select" id="userTier" required>
+                            <option value="free">Free (5 queries/dia)</option>
+                            <option value="premium">Premium (100 queries/dia)</option>
+                            <option value="pro">Pro (500 queries/dia)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" id="userStatus" required>
+                            <option value="true">Ativo</option>
+                            <option value="false">Inativo</option>
+                        </select>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                        <button type="submit" class="btn btn-success">Salvar</button>
+                        <button type="button" class="btn btn-secondary" onclick="hideUserForm()">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- SUBSCRIPTIONS SECTION -->
+        <div id="subscriptions" class="section">
+            <div class="section-header">
+                <div>
+                    <h2>Gerenciamento de Assinaturas</h2>
+                    <p>Controle de pagamentos e planos dos usuários</p>
+                </div>
+                <button class="btn btn-primary" onclick="showSubscriptionForm()">+ Nova Assinatura</button>
+            </div>
             
-            document.getElementById('users').textContent = userCount;
-            document.getElementById('queries').textContent = queryCount;
-        }, 5000);
+            <div id="subscriptionsList">
+                <div class="loading">🔄 Carregando assinaturas...</div>
+            </div>
+        </div>
+
+        <!-- QUERIES SECTION -->
+        <div id="queries" class="section">
+            <div class="section-header">
+                <div>
+                    <h2>Consultas de IA</h2>
+                    <p>Histórico e monitoramento de todas as consultas</p>
+                </div>
+                <div>
+                    <select class="form-select" onchange="filterQueries(this.value)" style="width: 200px;">
+                        <option value="all">Todas</option>
+                        <option value="success">Sucesso</option>
+                        <option value="error">Erro</option>
+                        <option value="rate_limited">Rate Limited</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div id="queriesList">
+                <div class="loading">🔄 Carregando consultas...</div>
+            </div>
+        </div>
+
+        <!-- ANALYTICS SECTION -->
+        <div id="analytics" class="section">
+            <div class="section-header">
+                <h2>Analytics e Métricas</h2>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; padding: 2rem;">
+                <div style="background: #f7fafc; padding: 1.5rem; border-radius: 8px;">
+                    <h3>Total Users</h3>
+                    <div style="font-size: 2rem; font-weight: bold; color: #3182ce;" id="totalUsers">-</div>
+                </div>
+                <div style="background: #f7fafc; padding: 1.5rem; border-radius: 8px;">
+                    <h3>Active Subscriptions</h3>
+                    <div style="font-size: 2rem; font-weight: bold; color: #38a169;" id="activeSubscriptions">-</div>
+                </div>
+                <div style="background: #f7fafc; padding: 1.5rem; border-radius: 8px;">
+                    <h3>Total Queries Today</h3>
+                    <div style="font-size: 2rem; font-weight: bold; color: #d69e2e;" id="totalQueries">-</div>
+                </div>
+                <div style="background: #f7fafc; padding: 1.5rem; border-radius: 8px;">
+                    <h3>Revenue (Month)</h3>
+                    <div style="font-size: 2rem; font-weight: bold; color: #38a169;" id="monthlyRevenue">-</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SYSTEM SECTION -->
+        <div id="system" class="section">
+            <div class="section-header">
+                <h2>Configurações do Sistema</h2>
+            </div>
+            
+            <div style="padding: 2rem;">
+                <h3>Database Operations</h3>
+                <div style="display: flex; gap: 1rem; margin: 1rem 0;">
+                    <button class="btn btn-secondary" onclick="runMigration()">Run Migration</button>
+                    <button class="btn btn-secondary" onclick="seedDatabase()">Seed Test Data</button>
+                    <button class="btn btn-danger" onclick="clearCache()">Clear Cache</button>
+                </div>
+                
+                <h3 style="margin-top: 2rem;">System Status</h3>
+                <div id="systemStatus" style="margin-top: 1rem;">
+                    <div class="loading">Checking system status...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUsers = [];
+        let currentSubscriptions = [];
+        let currentQueries = [];
         
-        // Add some interactivity
-        document.querySelectorAll('.card').forEach(card => {
-            card.addEventListener('click', () => {
-                card.style.transform = 'scale(1.02)';
-                setTimeout(() => {
-                    card.style.transform = 'translateY(-5px)';
-                }, 200);
-            });
+        // API Base URL
+        const API_BASE = '';
+        
+        function showSection(section) {
+            // Update nav
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update sections
+            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+            document.getElementById(section).classList.add('active');
+            
+            // Load data for section
+            switch(section) {
+                case 'users': loadUsers(); break;
+                case 'subscriptions': loadSubscriptions(); break;
+                case 'queries': loadQueries(); break;
+                case 'analytics': loadAnalytics(); break;
+                case 'system': loadSystemStatus(); break;
+            }
+        }
+        
+        // USERS FUNCTIONS
+        async function loadUsers() {
+            const container = document.getElementById('usersList');
+            container.innerHTML = '<div class="loading">🔄 Carregando usuários...</div>';
+            
+            try {
+                // For now, we'll use mock data - replace with real API call
+                const users = [
+                    {id: 1, email: 'admin@aissist.com', tier: 'pro', status: true, created_at: '2026-02-01', daily_usage: 15},
+                    {id: 2, email: 'user@test.com', tier: 'free', status: true, created_at: '2026-02-15', daily_usage: 4},
+                    {id: 3, email: 'premium@user.com', tier: 'premium', status: true, created_at: '2026-02-10', daily_usage: 25}
+                ];
+                
+                currentUsers = users;
+                renderUsers(users);
+            } catch (error) {
+                container.innerHTML = '<div class="error">Erro ao carregar usuários: ' + error.message + '</div>';
+            }
+        }
+        
+        function renderUsers(users) {
+            const html = \`
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Email</th>
+                            <th>Plano</th>
+                            <th>Status</th>
+                            <th>Uso Diário</th>
+                            <th>Cadastro</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        \${users.map(user => \`
+                            <tr>
+                                <td>\${user.id}</td>
+                                <td>\${user.email}</td>
+                                <td><span class="status-badge status-\${user.tier}">\${user.tier.toUpperCase()}</span></td>
+                                <td><span class="status-badge status-\${user.status ? 'active' : 'inactive'}">\${user.status ? 'Ativo' : 'Inativo'}</span></td>
+                                <td>\${user.daily_usage}</td>
+                                <td>\${user.created_at}</td>
+                                <td>
+                                    <div class="actions">
+                                        <button class="btn btn-primary" onclick="editUser(\${user.id})">Editar</button>
+                                        <button class="btn btn-danger" onclick="deleteUser(\${user.id})">Deletar</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        \`).join('')}
+                    </tbody>
+                </table>
+            \`;
+            
+            document.getElementById('usersList').innerHTML = html;
+        }
+        
+        function showUserForm(user = null) {
+            document.getElementById('userForm').classList.add('active');
+            document.getElementById('usersList').style.display = 'none';
+            
+            if (user) {
+                document.getElementById('userFormTitle').textContent = 'Editar Usuário';
+                document.getElementById('userId').value = user.id;
+                document.getElementById('userEmail').value = user.email;
+                document.getElementById('userTier').value = user.tier;
+                document.getElementById('userStatus').value = user.status.toString();
+            } else {
+                document.getElementById('userFormTitle').textContent = 'Novo Usuário';
+                document.getElementById('userId').value = '';
+                document.querySelector('#userForm form').reset();
+            }
+        }
+        
+        function hideUserForm() {
+            document.getElementById('userForm').classList.remove('active');
+            document.getElementById('usersList').style.display = 'block';
+        }
+        
+        function editUser(id) {
+            const user = currentUsers.find(u => u.id === id);
+            showUserForm(user);
+        }
+        
+        function deleteUser(id) {
+            if (confirm('Tem certeza que deseja deletar este usuário?')) {
+                // TODO: API call to delete user
+                currentUsers = currentUsers.filter(u => u.id !== id);
+                renderUsers(currentUsers);
+                alert('Usuário deletado com sucesso!');
+            }
+        }
+        
+        function saveUser(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const userData = {
+                id: document.getElementById('userId').value || Date.now(),
+                email: document.getElementById('userEmail').value,
+                tier: document.getElementById('userTier').value,
+                status: document.getElementById('userStatus').value === 'true'
+            };
+            
+            // TODO: API call to save user
+            if (userData.id && currentUsers.find(u => u.id == userData.id)) {
+                // Update existing
+                const index = currentUsers.findIndex(u => u.id == userData.id);
+                currentUsers[index] = {...currentUsers[index], ...userData};
+            } else {
+                // Add new
+                userData.id = Date.now();
+                userData.created_at = new Date().toISOString().split('T')[0];
+                userData.daily_usage = 0;
+                currentUsers.push(userData);
+            }
+            
+            renderUsers(currentUsers);
+            hideUserForm();
+            alert('Usuário salvo com sucesso!');
+        }
+        
+        function filterUsers() {
+            const search = document.getElementById('userSearch').value.toLowerCase();
+            const filtered = currentUsers.filter(user => 
+                user.email.toLowerCase().includes(search)
+            );
+            renderUsers(filtered);
+        }
+        
+        // SUBSCRIPTIONS FUNCTIONS
+        async function loadSubscriptions() {
+            const container = document.getElementById('subscriptionsList');
+            container.innerHTML = '<div class="loading">🔄 Carregando assinaturas...</div>';
+            
+            // Mock data for now
+            const subscriptions = [
+                {id: 1, user_email: 'premium@user.com', tier: 'premium', status: 'active', amount: 19.90, created_at: '2026-02-10'},
+                {id: 2, user_email: 'admin@aissist.com', tier: 'pro', status: 'active', amount: 39.90, created_at: '2026-02-01'}
+            ];
+            
+            const html = \`
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuário</th>
+                            <th>Plano</th>
+                            <th>Valor</th>
+                            <th>Status</th>
+                            <th>Criado</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        \${subscriptions.map(sub => \`
+                            <tr>
+                                <td>\${sub.id}</td>
+                                <td>\${sub.user_email}</td>
+                                <td><span class="status-badge status-\${sub.tier}">\${sub.tier.toUpperCase()}</span></td>
+                                <td>R$ \${sub.amount}</td>
+                                <td><span class="status-badge status-\${sub.status}">\${sub.status.toUpperCase()}</span></td>
+                                <td>\${sub.created_at}</td>
+                                <td>
+                                    <div class="actions">
+                                        <button class="btn btn-primary">Editar</button>
+                                        <button class="btn btn-danger">Cancelar</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        \`).join('')}
+                    </tbody>
+                </table>
+            \`;
+            
+            container.innerHTML = html;
+        }
+        
+        // QUERIES FUNCTIONS
+        async function loadQueries() {
+            const container = document.getElementById('queriesList');
+            container.innerHTML = '<div class="loading">🔄 Carregando consultas...</div>';
+            
+            // Mock data
+            const queries = [
+                {id: 1, user_email: 'user@test.com', query: 'filmes de suspense sem gore', status: 'success', created_at: '2026-02-18 01:15', processing_time: 1250},
+                {id: 2, user_email: 'admin@aissist.com', query: 'séries de comédia romântica', status: 'success', created_at: '2026-02-18 01:10', processing_time: 950}
+            ];
+            
+            const html = \`
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuário</th>
+                            <th>Consulta</th>
+                            <th>Status</th>
+                            <th>Tempo (ms)</th>
+                            <th>Data</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        \${queries.map(query => \`
+                            <tr>
+                                <td>\${query.id}</td>
+                                <td>\${query.user_email}</td>
+                                <td>\${query.query.substring(0, 50)}...</td>
+                                <td><span class="status-badge status-\${query.status === 'success' ? 'active' : 'inactive'}">\${query.status.toUpperCase()}</span></td>
+                                <td>\${query.processing_time}</td>
+                                <td>\${query.created_at}</td>
+                                <td>
+                                    <button class="btn btn-primary">Ver Resposta</button>
+                                </td>
+                            </tr>
+                        \`).join('')}
+                    </tbody>
+                </table>
+            \`;
+            
+            container.innerHTML = html;
+        }
+        
+        // ANALYTICS FUNCTIONS
+        async function loadAnalytics() {
+            document.getElementById('totalUsers').textContent = currentUsers.length || '0';
+            document.getElementById('activeSubscriptions').textContent = '2';
+            document.getElementById('totalQueries').textContent = '12';
+            document.getElementById('monthlyRevenue').textContent = 'R$ 59.80';
+        }
+        
+        // SYSTEM FUNCTIONS
+        async function loadSystemStatus() {
+            const container = document.getElementById('systemStatus');
+            container.innerHTML = \`
+                <div style="display: grid; gap: 1rem;">
+                    <div style="display: flex; justify-content: space-between; padding: 1rem; background: #f7fafc; border-radius: 4px;">
+                        <span>Database</span>
+                        <span style="color: #38a169;">🟢 Connected</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 1rem; background: #f7fafc; border-radius: 4px;">
+                        <span>AI Service</span>
+                        <span style="color: #38a169;">🟢 Online</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 1rem; background: #f7fafc; border-radius: 4px;">
+                        <span>Storage</span>
+                        <span style="color: #38a169;">🟢 Available</span>
+                    </div>
+                </div>
+            \`;
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUsers();
         });
-        
-        console.log('🎬 AIssist Admin Dashboard loaded successfully!');
-        console.log('📊 All systems operational');
     </script>
 </body>
 </html>
