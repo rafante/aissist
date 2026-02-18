@@ -2,10 +2,10 @@
   "name": "aissist",
   "version": "1.0.0",
   "description": "AIssist - AI-powered movie and TV recommendations",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "start": "node index.js",
+    "dev": "node index.js"
   },
   "engines": {
     "node": ">=18.0.0"
