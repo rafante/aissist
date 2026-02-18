@@ -2,13 +2,14 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy all files first
+COPY . .
+
+# Install dependencies if package.json exists
 RUN npm install || echo "No package.json, skipping npm install"
 
-# Copy server and HTML files
-COPY server.js .
-COPY watchwise_server/web/static/ ./watchwise_server/web/static/
+# Make sure static files are accessible
+RUN ls -la watchwise_server/web/static/ || echo "Static files not found"
 
 EXPOSE 8080
 
