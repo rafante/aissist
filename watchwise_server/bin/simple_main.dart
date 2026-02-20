@@ -2481,38 +2481,433 @@ Future<void> _handleDashboard(HttpRequest request) async {
 }
 
 Future<void> _handleAdminPage(HttpRequest request) async {
-  try {
-    // Try to load the complete admin panel
-    List<String> possiblePaths = [
-      'admin-panel-complete.html',
-      '/data/workspace/aissist/admin-panel-complete.html',
-      'admin-corrigido.html',
-      '/data/workspace/aissist/admin-corrigido.html',
-    ];
-    
-    String? htmlContent;
-    
-    for (final path in possiblePaths) {
-      try {
-        final adminFile = File(path);
-        if (await adminFile.exists()) {
-          htmlContent = await adminFile.readAsString();
-          print('✅ Admin panel loaded from: $path');
-          break;
+  // Force load the complete admin panel inline to ensure deployment works
+  const adminPanelHtml = r'''<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - AIssist</title>
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --primary-dark: #5a67d8;
+            --secondary-color: #764ba2;
+            --success-color: #48bb78;
+            --warning-color: #ed8936;
+            --danger-color: #f56565;
+            --dark-bg: #0f1419;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.8);
+            --text-muted: rgba(255, 255, 255, 0.6);
         }
-      } catch (e) {
-        // Continue trying other paths
-      }
-    }
-    
-    if (htmlContent != null) {
-      request.response
-        ..headers.contentType = ContentType.html
-        ..write(htmlContent);
-      await request.response.close();
-    } else {
-      throw Exception('Admin file not found');
-    }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, var(--dark-bg) 0%, #1a2332 50%, #2d3748 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        .header {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .nav-links a:hover, .nav-links a.active {
+            background: var(--card-bg);
+            color: var(--text-primary);
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+        .stat-card:hover { transform: translateY(-2px); }
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        .content-section {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        .btn-secondary {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        .data-table th, .data-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .data-table th {
+            background: rgba(255, 255, 255, 0.02);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .data-table td {
+            color: var(--text-secondary);
+        }
+        .data-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .badge-free {
+            background: rgba(156, 163, 175, 0.2);
+            color: #d1d5db;
+        }
+        .badge-premium {
+            background: rgba(102, 126, 234, 0.2);
+            color: var(--primary-color);
+        }
+        .badge-pro {
+            background: rgba(118, 75, 162, 0.2);
+            color: var(--secondary-color);
+        }
+        .search-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            align-items: center;
+        }
+        .search-input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .filter-select {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+        .loading {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .search-container { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">🔧 Admin Panel - AIssist</div>
+            <nav class="nav-links">
+                <a href="/" class="nav-link">🏠 Home</a>
+                <a href="/dashboard" class="nav-link">📊 Dashboard</a>
+                <a href="#" class="nav-link active">🔧 Admin</a>
+            </nav>
+        </div>
+    </div>
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalUsers">-</div>
+                <div class="stat-label">Total de Usuários</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalQueries">-</div>
+                <div class="stat-label">Consultas Hoje</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="activeUsers">-</div>
+                <div class="stat-label">Usuários Ativos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="revenue">R$ -</div>
+                <div class="stat-label">Receita Estimada</div>
+            </div>
+        </div>
+        <div class="content-section">
+            <div class="section-header">
+                <h2 class="section-title">👥 Usuários do Sistema</h2>
+                <button class="btn btn-primary" onclick="createUser()">➕ Novo Usuário</button>
+            </div>
+            <div class="search-container">
+                <input type="text" class="search-input" id="userSearch" placeholder="Buscar usuários por email...">
+                <select class="filter-select" id="planFilter">
+                    <option value="">Todos os Planos</option>
+                    <option value="free">Free</option>
+                    <option value="premium">Premium</option>
+                    <option value="pro">Pro</option>
+                </select>
+                <button class="btn btn-secondary" onclick="loadUsers()">🔄 Atualizar</button>
+            </div>
+            <table class="data-table" id="usersTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Email</th>
+                        <th>Plano</th>
+                        <th>Consultas Hoje</th>
+                        <th>Criado em</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem;">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                                Carregando usuários...
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        let users = [];
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStats();
+            loadUsers();
+        });
+        async function loadStats() {
+            try {
+                const response = await fetch('/admin/stats');
+                const stats = await response.json();
+                document.getElementById('totalUsers').textContent = stats.totalUsers || 0;
+                document.getElementById('totalQueries').textContent = stats.totalQueries || 0;
+                document.getElementById('activeUsers').textContent = stats.activeUsers || 0;
+                document.getElementById('revenue').textContent = 'R$ ' + (stats.revenue || '0.00');
+            } catch (error) {
+                console.error('Erro ao carregar stats:', error);
+            }
+        }
+        async function loadUsers() {
+            try {
+                const response = await fetch('/admin/users');
+                const data = await response.json();
+                users = data.users || [];
+                updateUsersTable();
+            } catch (error) {
+                console.error('Erro ao carregar usuários:', error);
+                document.getElementById('usersTableBody').innerHTML = `
+                    <tr><td colspan="6" style="text-align: center; padding: 2rem; color: #fc8181;">
+                        ❌ Erro ao carregar usuários: ${error.message}
+                    </td></tr>`;
+            }
+        }
+        function updateUsersTable() {
+            const tbody = document.getElementById('usersTableBody');
+            if (users.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 2rem;">
+                    Nenhum usuário cadastrado ainda. Crie o primeiro usuário!
+                </td></tr>`;
+                return;
+            }
+            tbody.innerHTML = users.map(user => `
+                <tr>
+                    <td>#${user.id}</td>
+                    <td>${user.email}</td>
+                    <td><span class="badge badge-${user.subscriptionTier}">${user.subscriptionTier.toUpperCase()}</span></td>
+                    <td>${user.dailyUsageCount}/${user.dailyLimit || 5}</td>
+                    <td>${new Date(user.createdAt).toLocaleDateString('pt-BR')}</td>
+                    <td>
+                        <button class="btn btn-secondary" onclick="editUser(${user.id})" style="margin-right: 0.5rem;">✏️ Editar</button>
+                        <button class="btn btn-danger" onclick="deleteUser(${user.id})" style="background: #f56565; color: white;">🗑️ Excluir</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        function createUser() {
+            const email = prompt('Email do novo usuário:');
+            if (!email) return;
+            const password = prompt('Senha (mínimo 6 caracteres):');
+            if (!password || password.length < 6) {
+                alert('Senha deve ter pelo menos 6 caracteres');
+                return;
+            }
+            const plan = prompt('Plano (free/premium/pro):', 'free');
+            if (!['free', 'premium', 'pro'].includes(plan)) {
+                alert('Plano deve ser: free, premium ou pro');
+                return;
+            }
+            createUserAPI(email, password, plan);
+        }
+        async function createUserAPI(email, password, plan) {
+            try {
+                const response = await fetch('/admin/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password,
+                        subscriptionTier: plan
+                    })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    alert('✅ Usuário criado com sucesso!');
+                    loadUsers();
+                    loadStats();
+                } else {
+                    alert('❌ Erro: ' + result.error);
+                }
+            } catch (error) {
+                alert('❌ Erro ao criar usuário: ' + error.message);
+            }
+        }
+        async function deleteUser(userId) {
+            if (!confirm('Tem certeza que deseja excluir este usuário?')) return;
+            try {
+                const response = await fetch(`/admin/users/${userId}`, { method: 'DELETE' });
+                const result = await response.json();
+                if (result.success) {
+                    alert('✅ Usuário excluído com sucesso!');
+                    loadUsers();
+                    loadStats();
+                } else {
+                    alert('❌ Erro: ' + result.error);
+                }
+            } catch (error) {
+                alert('❌ Erro ao excluir usuário: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>''';
+  
+  try {
+    print('✅ Serving complete admin panel inline');
+    request.response
+      ..headers.contentType = ContentType.html
+      ..write(adminPanelHtml);
+    await request.response.close();
   } catch (e) {
     print('❌ Error serving admin page: $e');
     
