@@ -1,5 +1,3 @@
-FORCE_DEPLOY_20260220_014530_CRITICAL_ROUTING_FIX
-This file forces a complete Docker rebuild and cache invalidation.
-Timestamp: 2026-02-20 01:45:30 UTC
-Issue: Coolify partial deploy - auth APIs work but root route (/) returns old 404
-Expected: Landing page should load at root route
+FORCE DEPLOY: 2026-02-20 14:30:00 UTC
+AUTH SYSTEM FIXED: JWT implementation complete
+COMMIT: 31d079b - Real authentication system
