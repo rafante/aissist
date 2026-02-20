@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIssist - Seu Assistente de Entretenimento Inteligente</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            overflow-x: hidden;
+        }
+        .container {
+            text-align: center;
+            max-width: 1000px;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .logo {
+            font-size: 4rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        .subtitle {
+            font-size: 1.3rem;
+            margin-bottom: 3rem;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+        .demo-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2.5rem;
+            border-radius: 20px;
+            margin-bottom: 3rem;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .demo-title {
+            font-size: 1.8rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+        .search-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .search-input {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            font-size: 1rem;
+            backdrop-filter: blur(10px);
+        }
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .search-input:focus {
+            outline: none;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+        .test-btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        .test-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        .test-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .ai-response {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-top: 2rem;
+            text-align: left;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .loading {
+            display: none;
+            margin: 2rem 0;
+        }
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        .feature {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2rem;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        .feature h3 {
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+        .feature p {
+            opacity: 0.8;
+            line-height: 1.5;
+        }
+        .auth-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+        .auth-btn {
+            padding: 0.8rem 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        .auth-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        .hidden { display: none; }
+        @media (max-width: 768px) {
+            .container { margin: 1rem; padding: 1.5rem; }
+            .logo { font-size: 2.5rem; }
+            .subtitle { font-size: 1.1rem; }
+            .search-container { flex-direction: column; }
+            .auth-buttons { flex-direction: column; align-items: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="logo">🎬 AIssist</h1>
+        <p class="subtitle">
+            Descubra filmes e séries perfeitos para você com inteligência artificial avançada.
+            Recomendações personalizadas, busca inteligente e muito mais!
+        </p>
+
+        <div class="demo-section">
+            <h2 class="demo-title">🤖 Teste a IA Agora</h2>
+            
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    class="search-input" 
+                    id="userQuery"
+                    placeholder="Ex: 'Quero um filme de suspense para assistir hoje à noite'"
+                    maxlength="200"
+                >
+                <button class="test-btn" id="testBtn" onclick="testAI()">
+                    ✨ Testar IA
+                </button>
+            </div>
+
+            <div class="loading hidden" id="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 1rem;">🧠 IA pensando...</p>
+            </div>
+
+            <div class="ai-response hidden" id="aiResponse">
+                <h4>🎯 Recomendação da IA:</h4>
+                <div id="responseContent"></div>
+            </div>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature">
+                <div class="feature-icon">🎯</div>
+                <h3>Recomendações Precisas</h3>
+                <p>IA treinada com milhares de filmes e séries para sugestões perfeitas</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">⚡</div>
+                <h3>Respostas Instantâneas</h3>
+                <p>Resultados em segundos, com explicações detalhadas e personalizadas</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🎬</div>
+                <h3>Catálogo Gigante</h3>
+                <p>Acesso a milhões de títulos com informações completas e atualizadas</p>
+            </div>
+        </div>
+
+        <div class="auth-buttons">
+            <a href="/signup" class="auth-btn">📝 Criar Conta Grátis</a>
+            <a href="/login" class="auth-btn">🔑 Fazer Login</a>
+            <a href="/admin" class="auth-btn">⚙️ Admin</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('userQuery').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                testAI();
+            }
+        });
+
+        async function testAI() {
+            const query = document.getElementById('userQuery').value.trim();
+            if (!query) {
+                alert('Digite uma pergunta sobre filmes ou séries!');
+                return;
+            }
+
+            const testBtn = document.getElementById('testBtn');
+            const loading = document.getElementById('loading');
+            const aiResponse = document.getElementById('aiResponse');
+            const responseContent = document.getElementById('responseContent');
+
+            // Show loading
+            testBtn.disabled = true;
+            testBtn.textContent = '⏳ Processando...';
+            loading.classList.remove('hidden');
+            aiResponse.classList.add('hidden');
+
+            try {
+                const response = await fetch('/ai/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    let html = '<p><strong>Sua pergunta:</strong> ' + query + '</p><br>';
+                    html += '<p><strong>Resposta da IA:</strong></p>';
+                    html += '<p>' + data.ai_response + '</p>';
+                    
+                    if (data.movie_suggestions && data.movie_suggestions.length > 0) {
+                        html += '<br><p><strong>Sugestões encontradas:</strong></p><ul>';
+                        for (let i = 0; i < Math.min(3, data.movie_suggestions.length); i++) {
+                            const movie = data.movie_suggestions[i];
+                            const year = movie.release_date ? ' (' + movie.release_date.split('-')[0] + ')' : '';
+                            html += '<li><strong>' + (movie.title || movie.name) + '</strong>' + year + '</li>';
+                        }
+                        html += '</ul>';
+                    }
+                    
+                    responseContent.innerHTML = html;
+                    aiResponse.classList.remove('hidden');
+                } else {
+                    alert('Erro: ' + (data.error || 'Falha na comunicação com a IA'));
+                }
+            } catch (error) {
+                alert('Erro de conexão: ' + error.message);
+                console.error('Erro:', error);
+            } finally {
+                testBtn.disabled = false;
+                testBtn.textContent = '✨ Testar IA';
+                loading.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -275,7 +275,7 @@ Future<void> _handleAIChat(HttpRequest request, TmdbService tmdb, RevivaLLMServi
 }
 
 Future<void> _handleLandingPage(HttpRequest request) async {
-  const htmlContent = '''
+  const htmlContent = r'''
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -326,10 +326,6 @@ Future<void> _handleLandingPage(HttpRequest request) async {
         .demo-title {
             font-size: 1.8rem;
             margin-bottom: 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 1rem;
         }
         .search-container {
             display: flex;
@@ -539,7 +535,6 @@ Future<void> _handleLandingPage(HttpRequest request) async {
             const aiResponse = document.getElementById('aiResponse');
             const responseContent = document.getElementById('responseContent');
 
-            // Show loading
             testBtn.disabled = true;
             testBtn.textContent = '⏳ Processando...';
             loading.classList.remove('hidden');
@@ -557,21 +552,21 @@ Future<void> _handleLandingPage(HttpRequest request) async {
                 const data = await response.json();
 
                 if (data.success) {
-                    responseContent.innerHTML = `
-                        <p><strong>Sua pergunta:</strong> ${query}</p>
-                        <br>
-                        <p><strong>Resposta da IA:</strong></p>
-                        <p>${data.ai_response}</p>
-                        ${data.movie_suggestions && data.movie_suggestions.length > 0 ? `
-                        <br>
-                        <p><strong>🎬 Sugestões encontradas:</strong></p>
-                        <ul>
-                            ${data.movie_suggestions.slice(0, 3).map(movie => `
-                                <li><strong>${movie.title || movie.name}</strong> ${movie.release_date ? '(' + movie.release_date.split('-')[0] + ')' : ''}</li>
-                            `).join('')}
-                        </ul>
-                        ` : ''}
-                    `;
+                    let html = '<p><strong>Sua pergunta:</strong> ' + query + '</p><br>';
+                    html += '<p><strong>Resposta da IA:</strong></p>';
+                    html += '<p>' + data.ai_response + '</p>';
+                    
+                    if (data.movie_suggestions && data.movie_suggestions.length > 0) {
+                        html += '<br><p><strong>Sugestões encontradas:</strong></p><ul>';
+                        for (let i = 0; i < Math.min(3, data.movie_suggestions.length); i++) {
+                            const movie = data.movie_suggestions[i];
+                            const year = movie.release_date ? ' (' + movie.release_date.split('-')[0] + ')' : '';
+                            html += '<li><strong>' + (movie.title || movie.name) + '</strong>' + year + '</li>';
+                        }
+                        html += '</ul>';
+                    }
+                    
+                    responseContent.innerHTML = html;
                     aiResponse.classList.remove('hidden');
                 } else {
                     alert('Erro: ' + (data.error || 'Falha na comunicação com a IA'));
@@ -1001,8 +996,8 @@ Future<void> _handleSignupPage(HttpRequest request) async {
                 <label for="planType">Plano:</label>
                 <select id="planType" name="planType" required>
                     <option value="free">Free - 5 consultas/dia</option>
-                    <option value="premium">Premium - 100 consultas/dia (R$ 19,90/mês)</option>
-                    <option value="pro">Pro - 500 consultas/dia (R$ 39,90/mês)</option>
+                    <option value="premium">Premium - 100 consultas/dia (R\$ 19,90/mês)</option>
+                    <option value="pro">Pro - 500 consultas/dia (R\$ 39,90/mês)</option>
                 </select>
                 <div class="plan-info" id="planInfo">
                     ✅ Plano Free: 5 consultas por dia, sem custo
@@ -1036,10 +1031,10 @@ Future<void> _handleSignupPage(HttpRequest request) async {
                     planInfo.innerHTML = '✅ Plano Free: 5 consultas por dia, sem custo';
                     break;
                 case 'premium':
-                    planInfo.innerHTML = '💎 Plano Premium: 100 consultas por dia, R$ 19,90/mês';
+                    planInfo.innerHTML = '💎 Plano Premium: 100 consultas por dia, R\$ 19,90/mês';
                     break;
                 case 'pro':
-                    planInfo.innerHTML = '🚀 Plano Pro: 500 consultas por dia, R$ 39,90/mês';
+                    planInfo.innerHTML = '🚀 Plano Pro: 500 consultas por dia, R\$ 39,90/mês';
                     break;
             }
         });
@@ -1557,7 +1552,7 @@ Future<void> _handleDashboard(HttpRequest request) async {
         document.getElementById('userAvatar').textContent = user.email.charAt(0).toUpperCase();
         document.getElementById('userName').textContent = user.email.split('@')[0];
         document.getElementById('userPlan').textContent = user.subscriptionTier.charAt(0).toUpperCase() + user.subscriptionTier.slice(1);
-        document.getElementById('welcomeMessage').textContent = `Bem-vindo, ${user.email.split('@')[0]}! 👋`;
+        document.getElementById('welcomeMessage').textContent = 'Bem-vindo, ' + user.email.split('@')[0] + '! 👋';
         
         // Update stats
         document.getElementById('remainingQueries').textContent = user.remainingQueries;
@@ -1567,7 +1562,7 @@ Future<void> _handleDashboard(HttpRequest request) async {
         const progressPercent = (usedQueries / totalQueries) * 100;
         
         document.getElementById('progressFill').style.width = progressPercent + '%';
-        document.getElementById('planDetails').textContent = `Plano ${user.subscriptionTier}: ${usedQueries}/${totalQueries} consultas usadas`;
+        document.getElementById('planDetails').textContent = 'Plano ' + user.subscriptionTier + ': ' + usedQueries + '/' + totalQueries + ' consultas usadas';
         
         // Chat functionality
         document.getElementById('messageInput').addEventListener('keypress', (e) => {
@@ -1588,7 +1583,7 @@ Future<void> _handleDashboard(HttpRequest request) async {
             // Add user message
             const userMessage = document.createElement('div');
             userMessage.className = 'message user';
-            userMessage.innerHTML = `<strong>Você:</strong> ${message}`;
+            userMessage.innerHTML = '<strong>Você:</strong> ' + message;
             chatMessages.appendChild(userMessage);
             
             // Clear input and disable button
@@ -1601,7 +1596,7 @@ Future<void> _handleDashboard(HttpRequest request) async {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': 'Bearer ' + token
                     },
                     body: JSON.stringify({ query: message })
                 });
@@ -1612,7 +1607,7 @@ Future<void> _handleDashboard(HttpRequest request) async {
                     // Add AI response
                     const aiMessage = document.createElement('div');
                     aiMessage.className = 'message ai';
-                    aiMessage.innerHTML = `<strong>AIssist:</strong> ${data.ai_response}`;
+                    aiMessage.innerHTML = '<strong>AIssist:</strong> ' + data.ai_response;
                     chatMessages.appendChild(aiMessage);
                     
                     // Update remaining queries
@@ -1624,7 +1619,7 @@ Future<void> _handleDashboard(HttpRequest request) async {
                         const newUsedQueries = totalQueries - data.queriesRemaining;
                         const newProgressPercent = (newUsedQueries / totalQueries) * 100;
                         document.getElementById('progressFill').style.width = newProgressPercent + '%';
-                        document.getElementById('planDetails').textContent = `Plano ${user.subscriptionTier}: ${newUsedQueries}/${totalQueries} consultas usadas`;
+                        document.getElementById('planDetails').textContent = 'Plano ' + user.subscriptionTier + ': ' + newUsedQueries + '/' + totalQueries + ' consultas usadas';
                     }
                 } else {
                     throw new Error(data.error || 'Erro na consulta');
@@ -1632,7 +1627,7 @@ Future<void> _handleDashboard(HttpRequest request) async {
             } catch (error) {
                 const errorMessage = document.createElement('div');
                 errorMessage.className = 'message ai';
-                errorMessage.innerHTML = `<strong>AIssist:</strong> ❌ Desculpe, ocorreu um erro: ${error.message}`;
+                errorMessage.innerHTML = '<strong>AIssist:</strong> ❌ Desculpe, ocorreu um erro: ' + error.message;
                 chatMessages.appendChild(errorMessage);
             } finally {
                 sendBtn.disabled = false;
