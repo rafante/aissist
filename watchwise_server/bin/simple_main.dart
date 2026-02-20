@@ -62,15 +62,18 @@ Future<void> main() async {
           await _handleDashboard(request);
           break;
         case '/admin':
-          await _handleAdminPage(request);
+          await _handleAdminPage(request, _users);
           break;
         case '/admin/stats':
+          if (!_isAdminAuthed(request, _users)) { await _sendUnauthorized(request); break; }
           await _handleAdminStats(request, _users);
           break;
         case '/admin/users':
+          if (!_isAdminAuthed(request, _users)) { await _sendUnauthorized(request); break; }
           await _handleAdminUsers(request, _users, _nextUserId++);
           break;
         case '/admin/queries':
+          if (!_isAdminAuthed(request, _users)) { await _sendUnauthorized(request); break; }
           await _handleAdminQueries(request, queryLog: _queryLog);
           break;
         case '/health':
@@ -103,6 +106,7 @@ Future<void> main() async {
         default:
           // Handle paths with parameters (like /admin/users/123)
           if (path.startsWith('/admin/users/')) {
+            if (!_isAdminAuthed(request, _users)) { await _sendUnauthorized(request); break; }
             final userId = path.split('/').last;
             await _handleAdminUserById(request, _users, userId);
           } else {
@@ -2480,7 +2484,7 @@ Future<void> _handleDashboard(HttpRequest request) async {
   await request.response.close();
 }
 
-Future<void> _handleAdminPage(HttpRequest request) async {
+Future<void> _handleAdminPage(HttpRequest request, Map<String, SimpleUser> users) async {
   // Force load the complete admin panel inline to ensure deployment works
   const adminPanelHtml = r'''<!DOCTYPE html>
 <html lang="pt-BR">
@@ -2784,6 +2788,7 @@ Future<void> _handleAdminPage(HttpRequest request) async {
                 <a href="/" class="nav-link">🏠 Home</a>
                 <a href="/dashboard" class="nav-link">📊 Dashboard</a>
                 <a href="#" class="nav-link active">🔧 Admin</a>
+                <a href="#" onclick="logout()" class="nav-link" style="color: var(--danger-color);">🚪 Sair</a>
             </nav>
         </div>
     </div>
@@ -2892,8 +2897,21 @@ Future<void> _handleAdminPage(HttpRequest request) async {
 
     <script>
         let users = [];
-        let allUsers = []; // Keep original list for filtering
+        let allUsers = [];
         let editingUser = null;
+
+        // Auth check - redirect if not logged in
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = '/login';
+        }
+
+        function authHeaders() {
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || '')
+            };
+        }
 
         document.addEventListener('DOMContentLoaded', function() {
             loadStats();
@@ -2917,7 +2935,8 @@ Future<void> _handleAdminPage(HttpRequest request) async {
 
         async function loadStats() {
             try {
-                const response = await fetch('/admin/stats');
+                const response = await fetch('/admin/stats', { headers: authHeaders() });
+                if (response.status === 401) { window.location.href = '/login'; return; }
                 const stats = await response.json();
                 document.getElementById('totalUsers').textContent = stats.totalUsers || 0;
                 document.getElementById('totalQueries').textContent = stats.totalQueries || 0;
@@ -2931,7 +2950,8 @@ Future<void> _handleAdminPage(HttpRequest request) async {
 
         async function loadUsers() {
             try {
-                const response = await fetch('/admin/users');
+                const response = await fetch('/admin/users', { headers: authHeaders() });
+                if (response.status === 401) { window.location.href = '/login'; return; }
                 const data = await response.json();
                 allUsers = data.users || [];
                 users = [...allUsers]; // Copy for filtering
@@ -3050,7 +3070,7 @@ Future<void> _handleAdminPage(HttpRequest request) async {
 
                 const response = await fetch(url, {
                     method,
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: authHeaders(),
                     body: JSON.stringify(formData)
                 });
 
@@ -3079,7 +3099,7 @@ Future<void> _handleAdminPage(HttpRequest request) async {
             if (!confirm(`Tem certeza que deseja excluir o usuário "${user.email}"?\n\nEsta ação não pode ser desfeita.`)) return;
 
             try {
-                const response = await fetch(`/admin/users/${userId}`, { method: 'DELETE' });
+                const response = await fetch(`/admin/users/${userId}`, { method: 'DELETE', headers: authHeaders() });
                 const result = await response.json();
                 if (result.success) {
                     showToast('Usuário excluído com sucesso!', 'success');
@@ -3104,6 +3124,12 @@ Future<void> _handleAdminPage(HttpRequest request) async {
             setTimeout(() => {
                 toast.style.transform = 'translateX(400px)';
             }, 3000);
+        }
+
+        function logout() {
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('user_data');
+            window.location.href = '/';
         }
 
         function showModalAlert(message, type) {
@@ -3284,6 +3310,33 @@ Future<void> _handleAdminPage(HttpRequest request) async {
       ..write(adminContent);
     await request.response.close();
   }
+}
+
+// ADMIN AUTH HELPERS
+
+/// Check if request has valid admin authentication
+/// For now, any authenticated user is admin (TODO: implement roles)
+bool _isAdminAuthed(HttpRequest request, Map<String, SimpleUser> users) {
+  try {
+    final authHeader = request.headers.value('authorization');
+    if (authHeader == null || !authHeader.startsWith('Bearer ')) return false;
+    final token = authHeader.substring(7);
+    final userId = SimpleAuthService.verifyJwtToken(token);
+    if (userId == null) return false;
+    final user = users[userId.toString()];
+    return user != null;
+  } catch (e) {
+    return false;
+  }
+}
+
+Future<void> _sendUnauthorized(HttpRequest request) async {
+  request.response
+    ..statusCode = 401
+    ..headers.contentType = ContentType.json
+    ..headers.add('Access-Control-Allow-Origin', '*')
+    ..write(jsonEncode({'error': 'Autenticação necessária', 'redirect': '/login'}));
+  await request.response.close();
 }
 
 // ADMIN ENDPOINTS
