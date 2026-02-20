@@ -1,3 +1,4 @@
-FORCE DEPLOY: 2026-02-20 14:30:00 UTC
-AUTH SYSTEM FIXED: JWT implementation complete
-COMMIT: 31d079b - Real authentication system
+FORCE DEPLOY: 2026-02-20 15:30:00 UTC
+ADMIN PANEL v1.1.0 DEPLOY
+COMMIT: 67a83c1 - Admin panel completo + CRUD + Analytics
+FEATURES: Admin interface, user management, query logging, real-time stats
