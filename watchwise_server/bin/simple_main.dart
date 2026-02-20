@@ -281,305 +281,525 @@ Future<void> _handleLandingPage(HttpRequest request) async {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIssist - Seu Assistente de Entretenimento Inteligente</title>
+    <title>AIssist - Demonstração do Design</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            color: #ffffff;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            overflow-x: hidden;
+        }
+        
+        .hero-section {
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            overflow-x: hidden;
+            position: relative;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
         }
-        .container {
-            text-align: center;
-            max-width: 1000px;
-            padding: 2rem;
+        
+        .hero-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
             background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            border-radius: 25px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border-radius: 50%;
+            animation: float 20s infinite linear;
+        }
+        
+        @keyframes float {
+            0% { opacity: 0; transform: translateY(100vh) translateX(0); }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { opacity: 0; transform: translateY(-10vh) translateX(100px); }
+        }
+        
+        .hero-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+            z-index: 2;
+            position: relative;
+        }
+        
+        .hero-text {
+            animation: fadeInUp 0.8s ease-out 0.3s both;
+        }
+        
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 24px;
+        }
+        
+        .hero-title .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 2s ease-in-out 1.5s;
+        }
+        
+        @keyframes shimmer {
+            0% { filter: brightness(1); }
+            50% { filter: brightness(1.3); }
+            100% { filter: brightness(1); }
+        }
+        
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 32px;
+            line-height: 1.6;
+            animation: fadeInUp 0.8s ease-out 0.5s both;
+        }
+        
+        .demo-box {
+            background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 32px;
+            animation: fadeInUp 0.8s ease-out 0.7s both;
         }
-        .logo {
-            font-size: 4rem;
-            font-weight: 900;
-            margin-bottom: 1rem;
-            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        
+        .demo-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
         }
-        .subtitle {
-            font-size: 1.3rem;
-            margin-bottom: 3rem;
-            opacity: 0.9;
+        
+        .demo-text {
+            color: white;
+            font-style: italic;
+            font-size: 1rem;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            animation: fadeInUp 0.8s ease-out 0.9s both;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: rgba(255, 255, 255, 0.8);
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: color 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-secondary:hover {
+            color: white;
+        }
+        
+        .hero-visual {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+        
+        .ai-brain {
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.1) 50%, transparent 100%);
+            position: relative;
+            animation: pulse 3s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .ai-brain::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 30px rgba(102, 126, 234, 0.5);
+        }
+        
+        .floating-elements {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .floating-element {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: orbit 8s linear infinite;
+        }
+        
+        .floating-element:nth-child(1) { background: #667eea; animation-delay: 0s; }
+        .floating-element:nth-child(2) { background: #764ba2; animation-delay: -1s; }
+        .floating-element:nth-child(3) { background: #f093fb; animation-delay: -2s; }
+        .floating-element:nth-child(4) { background: #667eea; animation-delay: -3s; }
+        .floating-element:nth-child(5) { background: #764ba2; animation-delay: -4s; }
+        .floating-element:nth-child(6) { background: #f093fb; animation-delay: -5s; }
+        
+        @keyframes orbit {
+            0% { transform: rotate(0deg) translateX(120px) rotate(0deg); }
+            100% { transform: rotate(360deg) translateX(120px) rotate(-360deg); }
+        }
+        
+        .features-section {
+            padding: 100px 24px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        .features-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 24px;
+        }
+        
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            transition: transform 0.2s, background 0.2s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+        
+        .feature-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .feature-description {
+            color: rgba(255, 255, 255, 0.8);
             line-height: 1.6;
         }
-        .demo-section {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 2.5rem;
-            border-radius: 20px;
-            margin-bottom: 3rem;
-            border: 1px solid rgba(255, 255, 255, 0.15);
+        
+        .scroll-indicator {
+            position: absolute;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+            animation: bounce 2s infinite;
         }
-        .demo-title {
-            font-size: 1.8rem;
-            margin-bottom: 2rem;
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-10px); }
         }
-        .search-container {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-        .search-input {
-            flex: 1;
-            padding: 1rem 1.5rem;
-            border: none;
-            border-radius: 50px;
-            background: rgba(255, 255, 255, 0.15);
-            color: white;
-            font-size: 1rem;
-            backdrop-filter: blur(10px);
-        }
-        .search-input::placeholder {
-            color: rgba(255, 255, 255, 0.7);
-        }
-        .search-input:focus {
-            outline: none;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
-        }
-        .test-btn {
-            padding: 1rem 2rem;
-            border: none;
-            border-radius: 50px;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-        }
-        .test-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-        }
-        .test-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-        .ai-response {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 15px;
-            padding: 2rem;
-            margin-top: 2rem;
-            text-align: left;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        .loading {
-            display: none;
-            margin: 2rem 0;
-        }
-        .spinner {
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-top: 3px solid white;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
-            margin-top: 3rem;
-        }
-        .feature {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 2rem;
-            border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .feature-icon {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-        }
-        .feature h3 {
-            margin-bottom: 1rem;
-            font-size: 1.2rem;
-        }
-        .feature p {
-            opacity: 0.8;
-            line-height: 1.5;
-        }
-        .auth-buttons {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin-top: 2rem;
-            flex-wrap: wrap;
-        }
-        .auth-btn {
-            padding: 0.8rem 1.5rem;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 25px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-        }
-        .auth-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-        }
-        .hidden { display: none; }
+        
+        /* Mobile responsiveness */
         @media (max-width: 768px) {
-            .container { margin: 1rem; padding: 1.5rem; }
-            .logo { font-size: 2.5rem; }
-            .subtitle { font-size: 1.1rem; }
-            .search-container { flex-direction: column; }
-            .auth-buttons { flex-direction: column; align-items: center; }
+            .hero-content {
+                grid-template-columns: 1fr;
+                gap: 40px;
+                text-align: center;
+            }
+            
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1.1rem;
+            }
+            
+            .cta-buttons {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            .ai-brain {
+                width: 250px;
+                height: 250px;
+            }
+        }
+        
+        .typing-cursor {
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1 class="logo">🎬 AIssist</h1>
-        <p class="subtitle">
-            Descubra filmes e séries perfeitos para você com inteligência artificial avançada.
-            Recomendações personalizadas, busca inteligente e muito mais!
-        </p>
-
-        <div class="demo-section">
-            <h2 class="demo-title">🤖 Teste a IA Agora</h2>
+    <div class="hero-section">
+        <!-- Animated particles background -->
+        <div class="hero-particles" id="particles"></div>
+        
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1 class="hero-title">
+                    Descubra filmes<br>
+                    perfeitos com<br>
+                    <span class="gradient-text">Inteligência Artificial</span>
+                </h1>
+                
+                <p class="hero-subtitle">
+                    Nossa IA conversacional entende exatamente o que você quer assistir.
+                    Sem spoilers, com recomendações precisas e uma experiência única.
+                </p>
+                
+                <div class="demo-box">
+                    <div class="demo-header">
+                        🔍 Experimente perguntar:
+                    </div>
+                    <div class="demo-text" id="typing-text">
+                        Filmes como Inception mas menos confuso<span class="typing-cursor">|</span>
+                    </div>
+                </div>
+                
+                <div class="cta-buttons">
+                    <a href="/signup" class="btn-primary">
+                        🚀 Começar Grátis
+                    </a>
+                    <a href="/login" class="btn-secondary">
+                        🔑 Fazer Login
+                    </a>
+                </div>
+            </div>
             
-            <div class="search-container">
-                <input 
-                    type="text" 
-                    class="search-input" 
-                    id="userQuery"
-                    placeholder="Ex: 'Quero um filme de suspense para assistir hoje à noite'"
-                    maxlength="200"
-                >
-                <button class="test-btn" id="testBtn" onclick="testAI()">
-                    ✨ Testar IA
-                </button>
-            </div>
-
-            <div class="loading hidden" id="loading">
-                <div class="spinner"></div>
-                <p style="margin-top: 1rem;">🧠 IA pensando...</p>
-            </div>
-
-            <div class="ai-response hidden" id="aiResponse">
-                <h4>🎯 Recomendação da IA:</h4>
-                <div id="responseContent"></div>
+            <div class="hero-visual">
+                <div class="ai-brain">
+                    <div class="floating-elements">
+                        <div class="floating-element"></div>
+                        <div class="floating-element"></div>
+                        <div class="floating-element"></div>
+                        <div class="floating-element"></div>
+                        <div class="floating-element"></div>
+                        <div class="floating-element"></div>
+                    </div>
+                </div>
             </div>
         </div>
-
+        
+        <div class="scroll-indicator">
+            <div>Role para descobrir mais</div>
+            <div>↓</div>
+        </div>
+    </div>
+    
+    <div class="features-section">
         <div class="features-grid">
-            <div class="feature">
-                <div class="feature-icon">🎯</div>
-                <h3>Recomendações Precisas</h3>
-                <p>IA treinada com milhares de filmes e séries para sugestões perfeitas</p>
+            <div class="feature-card">
+                <div class="feature-icon">🧠</div>
+                <h3 class="feature-title">IA Conversacional</h3>
+                <p class="feature-description">
+                    Converse naturalmente sobre o que você quer assistir. Nossa IA entende contexto, humor e preferências.
+                </p>
             </div>
-            <div class="feature">
+            
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <h3 class="feature-title">Zero Spoilers</h3>
+                <p class="feature-description">
+                    Sistema inteligente que protege você de spoilers, mantendo apenas informações seguras.
+                </p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🎮</div>
+                <h3 class="feature-title">Gamificação RPG</h3>
+                <p class="feature-description">
+                    Ganhe XP, conquiste badges e evolua seu perfil de gosto cinematográfico.
+                </p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">✨</div>
+                <h3 class="feature-title">Recomendações Precisas</h3>
+                <p class="feature-description">
+                    Algoritmo que aprende com suas avaliações para sugestões cada vez melhores.
+                </p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">👥</div>
+                <h3 class="feature-title">Social & Colaborativo</h3>
+                <p class="feature-description">
+                    Compartilhe listas, veja o que amigos estão assistindo e descubra novos conteúdos.
+                </p>
+            </div>
+            
+            <div class="feature-card">
                 <div class="feature-icon">⚡</div>
-                <h3>Respostas Instantâneas</h3>
-                <p>Resultados em segundos, com explicações detalhadas e personalizadas</p>
+                <h3 class="feature-title">Busca Ultrarrápida</h3>
+                <p class="feature-description">
+                    Resultados instantâneos em nossa base com milhões de filmes e séries atualizados.
+                </p>
             </div>
-            <div class="feature">
-                <div class="feature-icon">🎬</div>
-                <h3>Catálogo Gigante</h3>
-                <p>Acesso a milhões de títulos com informações completas e atualizadas</p>
-            </div>
-        </div>
-
-        <div class="auth-buttons">
-            <a href="/signup" class="auth-btn">📝 Criar Conta Grátis</a>
-            <a href="/login" class="auth-btn">🔑 Fazer Login</a>
-            <a href="/admin" class="auth-btn">⚙️ Admin</a>
         </div>
     </div>
 
     <script>
-        document.getElementById('userQuery').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                testAI();
-            }
-        });
-
-        async function testAI() {
-            const query = document.getElementById('userQuery').value.trim();
-            if (!query) {
-                alert('Digite uma pergunta sobre filmes ou séries!');
-                return;
-            }
-
-            const testBtn = document.getElementById('testBtn');
-            const loading = document.getElementById('loading');
-            const aiResponse = document.getElementById('aiResponse');
-            const responseContent = document.getElementById('responseContent');
-
-            testBtn.disabled = true;
-            testBtn.textContent = '⏳ Processando...';
-            loading.classList.remove('hidden');
-            aiResponse.classList.add('hidden');
-
-            try {
-                const response = await fetch('/ai/chat', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ query: query })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    let html = '<p><strong>Sua pergunta:</strong> ' + query + '</p><br>';
-                    html += '<p><strong>Resposta da IA:</strong></p>';
-                    html += '<p>' + data.ai_response + '</p>';
-                    
-                    if (data.movie_suggestions && data.movie_suggestions.length > 0) {
-                        html += '<br><p><strong>Sugestões encontradas:</strong></p><ul>';
-                        for (let i = 0; i < Math.min(3, data.movie_suggestions.length); i++) {
-                            const movie = data.movie_suggestions[i];
-                            const year = movie.release_date ? ' (' + movie.release_date.split('-')[0] + ')' : '';
-                            html += '<li><strong>' + (movie.title || movie.name) + '</strong>' + year + '</li>';
-                        }
-                        html += '</ul>';
-                    }
-                    
-                    responseContent.innerHTML = html;
-                    aiResponse.classList.remove('hidden');
-                } else {
-                    alert('Erro: ' + (data.error || 'Falha na comunicação com a IA'));
-                }
-            } catch (error) {
-                alert('Erro de conexão: ' + error.message);
-                console.error('Erro:', error);
-            } finally {
-                testBtn.disabled = false;
-                testBtn.textContent = '✨ Testar IA';
-                loading.classList.add('hidden');
+        // Create floating particles
+        function createParticles() {
+            const container = document.getElementById('particles');
+            const particleCount = 50;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                container.appendChild(particle);
             }
         }
+
+        // Typing animation
+        function startTypingAnimation() {
+            const texts = [
+                'Filmes como Inception mas menos confuso',
+                'Algo romântico que não seja piegas',
+                'Terror psicológico tipo Black Mirror',
+                'Comédia inteligente estilo Brooklyn 99',
+                'Ficção científica com ação e drama'
+            ];
+            
+            let textIndex = 0;
+            const typingElement = document.getElementById('typing-text');
+            
+            function typeText(text, callback) {
+                let charIndex = 0;
+                const typingInterval = setInterval(() => {
+                    if (charIndex < text.length) {
+                        typingElement.innerHTML = text.substring(0, charIndex + 1) + '<span class="typing-cursor">|</span>';
+                        charIndex++;
+                    } else {
+                        clearInterval(typingInterval);
+                        setTimeout(callback, 2000);
+                    }
+                }, 80);
+            }
+            
+            function deleteText(callback) {
+                let currentText = texts[textIndex];
+                let charIndex = currentText.length;
+                const deletingInterval = setInterval(() => {
+                    if (charIndex > 0) {
+                        typingElement.innerHTML = currentText.substring(0, charIndex - 1) + '<span class="typing-cursor">|</span>';
+                        charIndex--;
+                    } else {
+                        clearInterval(deletingInterval);
+                        textIndex = (textIndex + 1) % texts.length;
+                        setTimeout(callback, 500);
+                    }
+                }, 40);
+            }
+            
+            function cycle() {
+                typeText(texts[textIndex], () => {
+                    deleteText(cycle);
+                });
+            }
+            
+            cycle();
+        }
+
+        // Initialize animations
+        document.addEventListener('DOMContentLoaded', () => {
+            createParticles();
+            setTimeout(startTypingAnimation, 1000);
+        });
     </script>
 </body>
 </html>
