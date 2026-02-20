@@ -39,6 +39,8 @@ Future<void> main() async {
         case '/':
         case '/index':
         case '/home':
+        case '/site':
+        case '/app':
           await _handleLandingPage(request);
           break;
         case '/login':

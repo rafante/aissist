@@ -1,16 +1,28 @@
-FROM node:18-alpine
+# Multi-stage build for Dart application
+FROM dart:stable AS build
 
+# Copy the entire project
 WORKDIR /app
-
-# Copy all files first
 COPY . .
 
-# Install dependencies if package.json exists
-RUN npm install || echo "No package.json, skipping npm install"
+# Get dependencies and compile
+WORKDIR /app/watchwise_server
+RUN dart pub get
+RUN dart compile exe bin/simple_main.dart -o main
 
-# Make sure static files are accessible
-RUN ls -la watchwise_server/web/static/ || echo "Static files not found"
+# Runtime stage  
+FROM debian:bullseye-slim
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
 
-EXPOSE 8080
+WORKDIR /app
+COPY --from=build /app/watchwise_server/main .
 
-CMD ["node", "server.js"]
+# Expose port
+EXPOSE 8081
+
+# Environment variables
+ENV PORT=8081
+ENV TMDB_API_KEY=466fd9ba21e369cd51e7743d32b7833f
+
+# Start the server
+CMD ["./main"]
