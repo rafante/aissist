@@ -1,9 +1,9 @@
 /// Simple User model for standalone system (no Serverpod dependencies)
 class SimpleUser {
   final int id;
-  final String email;
+  String email;  // Mutable for admin edits
   final String passwordHash;
-  final String subscriptionTier;
+  String subscriptionTier;  // Mutable for admin edits
   int dailyUsageCount;
   final DateTime createdAt;
   DateTime updatedAt;
