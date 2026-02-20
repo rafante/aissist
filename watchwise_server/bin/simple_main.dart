@@ -118,20 +118,56 @@ Future<void> _handleHealth(HttpRequest request) async {
   await request.response.close();
 }
 
+// Rate limiting cache for TMDB requests
+final Map<String, DateTime> _tmdbCache = {};
+final Duration _cacheExpiry = Duration(minutes: 15);
+
 Future<void> _handlePopularMovies(HttpRequest request, TmdbService tmdb, Map<String, String> query) async {
   final page = int.tryParse(query['page'] ?? '1') ?? 1;
   final language = query['language'] ?? 'pt-BR';
+  final cacheKey = 'popular_${page}_$language';
   
-  final movies = await tmdb.getPopularMovies(page: page, language: language);
+  // Check cache first to prevent API spam
+  final now = DateTime.now();
+  if (_tmdbCache.containsKey(cacheKey) && 
+      now.difference(_tmdbCache[cacheKey]!) < _cacheExpiry) {
+    // Return cached response indicator
+    request.response
+      ..headers.contentType = ContentType.json
+      ..headers.add('Access-Control-Allow-Origin', '*')
+      ..write(jsonEncode({
+        'success': true,
+        'cached': true,
+        'message': 'Using cached data to prevent API rate limiting'
+      }));
+    await request.response.close();
+    return;
+  }
   
-  request.response
-    ..headers.contentType = ContentType.json
-    ..write(jsonEncode({
-      'success': true,
-      'data': movies.map((m) => m.toJson()).toList(),
-      'page': page,
-      'total_results': movies.length
-    }));
+  try {
+    final movies = await tmdb.getPopularMovies(page: page, language: language);
+    _tmdbCache[cacheKey] = now; // Update cache timestamp
+    
+    request.response
+      ..headers.contentType = ContentType.json
+      ..headers.add('Access-Control-Allow-Origin', '*')
+      ..write(jsonEncode({
+        'success': true,
+        'data': movies.map((m) => m.toJson()).toList(),
+        'page': page,
+        'total_results': movies.length
+      }));
+  } catch (e) {
+    print('⚠️ TMDB API error: $e');
+    request.response
+      ..headers.contentType = ContentType.json
+      ..headers.add('Access-Control-Allow-Origin', '*')
+      ..write(jsonEncode({
+        'success': false,
+        'error': 'TMDB API temporarily unavailable',
+        'fallback': true
+      }));
+  }
   await request.response.close();
 }
 
@@ -323,6 +359,23 @@ Future<void> _handleLandingPage(HttpRequest request) async {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 50%;
             animation: float 20s infinite linear;
+        }
+
+        .movie-poster {
+            position: absolute;
+            width: 60px;
+            height: 90px;
+            border-radius: 8px;
+            opacity: 0.15;
+            animation: floatPosters 25s infinite linear;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes floatPosters {
+            0% { opacity: 0; transform: translateY(110vh) translateX(0) rotate(0deg); }
+            5% { opacity: 0.15; }
+            95% { opacity: 0.15; }
+            100% { opacity: 0; transform: translateY(-10vh) translateX(50px) rotate(10deg); }
         }
         
         @keyframes float {
@@ -730,10 +783,117 @@ Future<void> _handleLandingPage(HttpRequest request) async {
     </div>
 
     <script>
+        // Language and content configuration
+        const isPortuguese = navigator.language.startsWith('pt') || 
+                            navigator.languages.some(lang => lang.startsWith('pt'));
+        
+        const content = {
+            pt: {
+                heroTitle1: 'Descubra filmes',
+                heroTitle2: 'perfeitos com',
+                heroTitle3: 'Inteligência Artificial',
+                heroSubtitle: 'Nossa IA conversacional entende exatamente o que você quer assistir. Sem spoilers, com recomendações precisas e uma experiência única.',
+                demoHeader: '🔍 Experimente perguntar:',
+                btnStart: '🚀 Começar Grátis',
+                btnLogin: '🔑 Fazer Login',
+                scrollText: 'Role para descobrir mais',
+                typingTexts: [
+                    'Filmes como Inception mas menos confuso',
+                    'Algo romântico que não seja piegas',
+                    'Terror psicológico tipo Black Mirror',
+                    'Comédia inteligente estilo Brooklyn 99',
+                    'Ficção científica com ação e drama'
+                ],
+                features: [
+                    {
+                        icon: '🧠',
+                        title: 'IA Conversacional',
+                        description: 'Converse naturalmente sobre o que você quer assistir. Nossa IA entende contexto, humor e preferências.'
+                    },
+                    {
+                        icon: '🔒',
+                        title: 'Zero Spoilers',
+                        description: 'Sistema inteligente que protege você de spoilers, mantendo apenas informações seguras.'
+                    },
+                    {
+                        icon: '🎮',
+                        title: 'Gamificação RPG',
+                        description: 'Ganhe XP, conquiste badges e evolua seu perfil de gosto cinematográfico.'
+                    },
+                    {
+                        icon: '✨',
+                        title: 'Recomendações Precisas',
+                        description: 'Algoritmo que aprende com suas avaliações para sugestões cada vez melhores.'
+                    },
+                    {
+                        icon: '👥',
+                        title: 'Social & Colaborativo',
+                        description: 'Compartilhe listas, veja o que amigos estão assistindo e descubra novos conteúdos.'
+                    },
+                    {
+                        icon: '⚡',
+                        title: 'Busca Ultrarrápida',
+                        description: 'Resultados instantâneos em nossa base com milhões de filmes e séries atualizados.'
+                    }
+                ]
+            },
+            en: {
+                heroTitle1: 'Discover perfect',
+                heroTitle2: 'movies with',
+                heroTitle3: 'Artificial Intelligence',
+                heroSubtitle: 'Our conversational AI understands exactly what you want to watch. No spoilers, precise recommendations and a unique experience.',
+                demoHeader: '🔍 Try asking:',
+                btnStart: '🚀 Get Started Free',
+                btnLogin: '🔑 Sign In',
+                scrollText: 'Scroll to discover more',
+                typingTexts: [
+                    'Movies like Inception but less confusing',
+                    'Something romantic that isn\'t cheesy',
+                    'Psychological horror like Black Mirror',
+                    'Smart comedy like Brooklyn Nine-Nine',
+                    'Sci-fi with action and drama'
+                ],
+                features: [
+                    {
+                        icon: '🧠',
+                        title: 'Conversational AI',
+                        description: 'Chat naturally about what you want to watch. Our AI understands context, mood and preferences.'
+                    },
+                    {
+                        icon: '🔒',
+                        title: 'Zero Spoilers',
+                        description: 'Smart system that protects you from spoilers, keeping only safe information.'
+                    },
+                    {
+                        icon: '🎮',
+                        title: 'RPG Gamification',
+                        description: 'Earn XP, unlock badges and evolve your cinematic taste profile.'
+                    },
+                    {
+                        icon: '✨',
+                        title: 'Precise Recommendations',
+                        description: 'Algorithm that learns from your ratings for increasingly better suggestions.'
+                    },
+                    {
+                        icon: '👥',
+                        title: 'Social & Collaborative',
+                        description: 'Share lists, see what friends are watching and discover new content.'
+                    },
+                    {
+                        icon: '⚡',
+                        title: 'Ultra-fast Search',
+                        description: 'Instant results in our database with millions of updated movies and series.'
+                    }
+                ]
+            }
+        };
+
+        const lang = isPortuguese ? 'pt' : 'en';
+
         // Create floating particles
         function createParticles() {
             const container = document.getElementById('particles');
-            const particleCount = 50;
+            const particleCount = 30; // Reduced for movie posters
             
             for (let i = 0; i < particleCount; i++) {
                 const particle = document.createElement('div');
@@ -745,16 +905,39 @@ Future<void> _handleLandingPage(HttpRequest request) async {
             }
         }
 
+        // Create floating movie posters
+        async function createMoviePosters() {
+            try {
+                const response = await fetch('/movies/popular?page=' + (Math.floor(Math.random() * 5) + 1));
+                const data = await response.json();
+                
+                if (data.success && data.data && data.data.length > 0) {
+                    const container = document.getElementById('particles');
+                    const posterCount = 12;
+                    
+                    for (let i = 0; i < posterCount; i++) {
+                        const movie = data.data[Math.floor(Math.random() * data.data.length)];
+                        if (movie.poster_path) {
+                            const poster = document.createElement('div');
+                            poster.className = 'movie-poster';
+                            poster.style.backgroundImage = 'url(https://image.tmdb.org/t/p/w200' + movie.poster_path + ')';
+                            poster.style.backgroundSize = 'cover';
+                            poster.style.backgroundPosition = 'center';
+                            poster.style.left = Math.random() * 95 + '%';
+                            poster.style.animationDelay = Math.random() * 25 + 's';
+                            poster.style.animationDuration = (Math.random() * 10 + 20) + 's';
+                            container.appendChild(poster);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.log('Movie posters not loaded, using particles only');
+            }
+        }
+
         // Typing animation
         function startTypingAnimation() {
-            const texts = [
-                'Filmes como Inception mas menos confuso',
-                'Algo romântico que não seja piegas',
-                'Terror psicológico tipo Black Mirror',
-                'Comédia inteligente estilo Brooklyn 99',
-                'Ficção científica com ação e drama'
-            ];
-            
+            const texts = content[lang].typingTexts;
             let textIndex = 0;
             const typingElement = document.getElementById('typing-text');
             
@@ -795,9 +978,37 @@ Future<void> _handleLandingPage(HttpRequest request) async {
             cycle();
         }
 
+        // Update page content based on language
+        function updateContent() {
+            const c = content[lang];
+            
+            // Update hero section
+            document.querySelector('.hero-title').innerHTML = 
+                c.heroTitle1 + '<br>' + c.heroTitle2 + '<br>' + 
+                '<span class="gradient-text">' + c.heroTitle3 + '</span>';
+            
+            document.querySelector('.hero-subtitle').textContent = c.heroSubtitle;
+            document.querySelector('.demo-header').textContent = c.demoHeader;
+            document.querySelector('.btn-primary').textContent = c.btnStart;
+            document.querySelector('.btn-secondary').textContent = c.btnLogin;
+            document.querySelector('.scroll-indicator div:first-child').textContent = c.scrollText;
+
+            // Update features
+            const featureCards = document.querySelectorAll('.feature-card');
+            featureCards.forEach((card, index) => {
+                if (c.features[index]) {
+                    card.querySelector('.feature-icon').textContent = c.features[index].icon;
+                    card.querySelector('.feature-title').textContent = c.features[index].title;
+                    card.querySelector('.feature-description').textContent = c.features[index].description;
+                }
+            });
+        }
+
         // Initialize animations
         document.addEventListener('DOMContentLoaded', () => {
+            updateContent();
             createParticles();
+            createMoviePosters();
             setTimeout(startTypingAnimation, 1000);
         });
     </script>
