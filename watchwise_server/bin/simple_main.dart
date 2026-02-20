@@ -2,10 +2,12 @@ import 'dart:io';
 import 'dart:convert';
 import '../lib/src/services/tmdb_service.dart';
 import '../lib/src/services/reviva_llm_service.dart';
+import '../lib/src/services/auth_service.dart';
+import '../lib/src/protocol/user.dart';
 
-/// Ultra-simple HTTP server for AIssist MVP
+/// Ultra-simple HTTP server for AIssist MVP with REAL authentication
 Future<void> main() async {
-  print('🎬 Starting AIssist Complete Navigation System...');
+  print('🎬 Starting AIssist Complete Navigation System with REAL AUTH...');
   
   // Get TMDB API key
   const apiKey = String.fromEnvironment('TMDB_API_KEY', defaultValue: '466fd9ba21e369cd51e7743d32b7833f');
@@ -14,10 +16,14 @@ Future<void> main() async {
   // Initialize Reviva LLM service
   final llmService = RevivaLLMService();
   
+  // In-memory user storage (TODO: Connect to real DB in production)
+  final Map<String, User> _users = {};
+  int _nextUserId = 1;
+  
   // Create HTTP server  
   final port = int.fromEnvironment('PORT', defaultValue: 8081);
   final server = await HttpServer.bind(InternetAddress.anyIPv4, port);
-  print('🚀 Server running on port $port');
+  print('🚀 Server running on port $port with JWT authentication');
   
   await for (final request in server) {
     final path = request.uri.path;
@@ -29,10 +35,10 @@ Future<void> main() async {
         request.response
           ..headers.add('Access-Control-Allow-Origin', '*')
           ..headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-          ..headers.add('Access-Control-Allow-Headers', 'Content-Type')
+          ..headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
           ..statusCode = 200;
         await request.response.close();
-        return;
+        continue;
       }
       
       switch (path) {
@@ -68,19 +74,19 @@ Future<void> main() async {
           await _handleSearchTV(request, tmdb, query);
           break;
         case '/ai/chat':
-          await _handleAIChat(request, tmdb, llmService, query);
+          await _handleAIChat(request, tmdb, llmService, query, _users);
           break;
         case '/auth/signup':
-          await _handleSignup(request);
+          await _handleSignupReal(request, _users, _nextUserId++);
           break;
         case '/auth/login':
-          await _handleLogin(request);
+          await _handleLoginReal(request, _users);
           break;
         case '/auth/me':
-          await _handleMe(request);
+          await _handleMeReal(request, _users);
           break;
         case '/auth/usage':
-          await _handleUsage(request);
+          await _handleUsageReal(request, _users);
           break;
         default:
           await _handle404(request);
@@ -94,10 +100,12 @@ Future<void> main() async {
 Future<void> _handleHealth(HttpRequest request) async {
   request.response
     ..headers.contentType = ContentType.json
+    ..headers.add('Access-Control-Allow-Origin', '*')
     ..write(jsonEncode({
       'status': 'healthy',
-      'service': 'AIssist API',
-      'version': '1.0',
+      'service': 'AIssist API with REAL AUTH',
+      'version': '2.0-FIXED',
+      'auth': 'JWT enabled',
       'endpoints': [
         '/ - Landing Page',
         '/login - Login Page', 
@@ -105,14 +113,14 @@ Future<void> _handleHealth(HttpRequest request) async {
         '/dashboard - User Dashboard',
         '/admin - Admin Panel',
         '/health - API Health',
-        '/auth/signup (POST) - Create Account',
-        '/auth/login (POST) - User Login',
-        '/auth/me (GET) - User Info',
-        '/auth/usage (GET) - Usage Stats',
-        '/ai/chat (POST) - AI Chat',
-        '/movies/popular - Popular Movies',
-        '/movies/search - Search Movies',
-        '/tv/search - Search TV Shows'
+        'POST /auth/signup - Create Account (REAL)',
+        'POST /auth/login - User Login (REAL)',
+        'GET /auth/me - User Info (REAL)',
+        'GET /auth/usage - Usage Stats (REAL)',
+        'POST /ai/chat - AI Chat with Rate Limiting (REAL)',
+        'GET /movies/popular - Popular Movies',
+        'GET /movies/search - Search Movies',
+        'GET /tv/search - Search TV Shows'
       ]
     }));
   await request.response.close();
@@ -235,28 +243,51 @@ Future<void> _handleSearchTV(HttpRequest request, TmdbService tmdb, Map<String, 
   await request.response.close();
 }
 
-Future<void> _handleAIChat(HttpRequest request, TmdbService tmdb, RevivaLLMService llmService, Map<String, String> query) async {
+Future<void> _handleAIChat(HttpRequest request, TmdbService tmdb, RevivaLLMService llmService, Map<String, String> query, Map<String, User> users) async {
   if (request.method != 'POST') {
     request.response
       ..statusCode = 405
       ..headers.contentType = ContentType.json
+      ..headers.add('Access-Control-Allow-Origin', '*')
       ..write(jsonEncode({'error': 'Method not allowed. Use POST.'}));
     await request.response.close();
     return;
   }
   
   try {
+    // Check authentication
+    final authHeader = request.headers.value('authorization');
+    if (authHeader == null || !authHeader.startsWith('Bearer ')) {
+      throw Exception('Autenticação necessária');
+    }
+
+    final token = authHeader.substring(7);
+    final userId = AuthService.verifyJwtToken(token);
+    
+    if (userId == null) {
+      throw Exception('Token inválido ou expirado');
+    }
+
+    final user = users[userId.toString()];
+    if (user == null) {
+      throw Exception('Usuário não encontrado');
+    }
+
+    // Check rate limits
+    final dailyLimit = user.subscriptionTier == 'pro' ? 500 
+                     : user.subscriptionTier == 'premium' ? 100 
+                     : 5;
+    
+    if (user.dailyUsageCount >= dailyLimit) {
+      throw Exception('Limite de consultas diárias atingido. Upgrade seu plano ou tente amanhã.');
+    }
+
     final body = await utf8.decoder.bind(request).join();
     final data = jsonDecode(body) as Map<String, dynamic>;
     
     final userQuery = data['query'] as String?;
     if (userQuery == null || userQuery.trim().isEmpty) {
-      request.response
-        ..statusCode = 400
-        ..headers.contentType = ContentType.json
-        ..write(jsonEncode({'error': 'query field required'}));
-      await request.response.close();
-      return;
+      throw Exception('Query é obrigatória');
     }
     
     // Search for movies related to the query to give AI context
@@ -278,9 +309,11 @@ Future<void> _handleAIChat(HttpRequest request, TmdbService tmdb, RevivaLLMServi
       movieContext: movieContext,
     );
     
-    // Simulate decrementing queries for demo
-    final random = DateTime.now().millisecondsSinceEpoch % 100;
-    final queriesRemaining = random > 50 ? 94 : 93;
+    // Update usage count
+    user.dailyUsageCount++;
+    final queriesRemaining = dailyLimit - user.dailyUsageCount;
+
+    print('🤖 AI QUERY: User ${user.id} (${user.email}): "$userQuery" - Remaining: $queriesRemaining');
 
     request.response
       ..headers.contentType = ContentType.json
@@ -293,6 +326,8 @@ Future<void> _handleAIChat(HttpRequest request, TmdbService tmdb, RevivaLLMServi
         'ai_response': aiResponse,
         'movie_suggestions': movieContext,
         'queriesRemaining': queriesRemaining,
+        'dailyLimit': dailyLimit,
+        'subscriptionTier': user.subscriptionTier,
         'timestamp': DateTime.now().toIso8601String(),
       }));
     await request.response.close();
@@ -300,11 +335,12 @@ Future<void> _handleAIChat(HttpRequest request, TmdbService tmdb, RevivaLLMServi
   } catch (e) {
     print('❌ Error in AI chat: $e');
     request.response
-      ..statusCode = 500
+      ..statusCode = 400
       ..headers.contentType = ContentType.json
+      ..headers.add('Access-Control-Allow-Origin', '*')
       ..write(jsonEncode({
-        'error': 'Failed to generate AI response',
-        'message': e.toString()
+        'success': false,
+        'error': e.toString(),
       }));
     await request.response.close();
   }
@@ -1677,12 +1713,13 @@ Future<void> _handle404(HttpRequest request) async {
   await request.response.close();
 }
 
-Future<void> _handleSignup(HttpRequest request) async {
+Future<void> _handleSignupReal(HttpRequest request, Map<String, User> users, int userId) async {
   if (request.method != 'POST') {
     request.response
       ..statusCode = 405
       ..headers.contentType = ContentType.json
-      ..write(jsonEncode({'error': 'Method not allowed. Use POST.'}));
+      ..headers.add('Access-Control-Allow-Origin', '*')
+      ..write(jsonEncode({'success': false, 'error': 'Method not allowed'}));
     await request.response.close();
     return;
   }
@@ -1695,18 +1732,45 @@ Future<void> _handleSignup(HttpRequest request) async {
     final password = data['password'] as String?;
     final planType = data['planType'] as String? ?? 'free';
 
-    print('✅ Signup: $email, plan: $planType');
+    // Validation
+    if (email == null || email.isEmpty) {
+      throw Exception('Email é obrigatório');
+    }
+    if (password == null || password.length < 6) {
+      throw Exception('Senha deve ter pelo menos 6 caracteres');
+    }
+    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(email)) {
+      throw Exception('Email inválido');
+    }
+
+    // Check if user already exists
+    if (users.values.any((u) => u.email == email)) {
+      throw Exception('Email já está em uso');
+    }
+
+    // Create new user
+    final user = User(
+      id: userId,
+      email: email,
+      passwordHash: AuthService.hashPassword(password),
+      subscriptionTier: planType,
+      dailyUsageCount: 0,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+
+    // Save user
+    users[userId.toString()] = user;
+
+    // Generate JWT token
+    final token = AuthService.generateJwtToken(user);
+
+    print('✅ NEW USER REGISTERED: $email (ID: $userId, Plan: $planType)');
 
     final response = {
       'success': true,
-      'user': {
-        'id': DateTime.now().millisecondsSinceEpoch % 10000,
-        'email': email,
-        'subscriptionTier': planType,
-        'remainingQueries': planType == 'pro' ? 500 : planType == 'premium' ? 100 : 5,
-        'createdAt': DateTime.now().toIso8601String(),
-      },
-      'token': 'jwt_${DateTime.now().millisecondsSinceEpoch}_${email?.split('@')[0] ?? 'user'}',
+      'user': user.toPublicJson(),
+      'token': token,
       'message': 'Conta criada com sucesso! Bem-vindo ao AIssist.',
     };
 
@@ -1720,17 +1784,19 @@ Future<void> _handleSignup(HttpRequest request) async {
     request.response
       ..statusCode = 400
       ..headers.contentType = ContentType.json
-      ..write(jsonEncode({'error': 'Invalid signup data', 'message': e.toString()}));
+      ..headers.add('Access-Control-Allow-Origin', '*')
+      ..write(jsonEncode({'success': false, 'error': e.toString()}));
     await request.response.close();
   }
 }
 
-Future<void> _handleLogin(HttpRequest request) async {
+Future<void> _handleLoginReal(HttpRequest request, Map<String, User> users) async {
   if (request.method != 'POST') {
     request.response
       ..statusCode = 405
       ..headers.contentType = ContentType.json
-      ..write(jsonEncode({'error': 'Method not allowed. Use POST.'}));
+      ..headers.add('Access-Control-Allow-Origin', '*')
+      ..write(jsonEncode({'success': false, 'error': 'Method not allowed'}));
     await request.response.close();
     return;
   }
@@ -1742,18 +1808,44 @@ Future<void> _handleLogin(HttpRequest request) async {
     final email = data['email'] as String?;
     final password = data['password'] as String?;
 
-    print('🔑 Login: $email');
+    // Validation
+    if (email == null || email.isEmpty) {
+      throw Exception('Email é obrigatório');
+    }
+    if (password == null || password.isEmpty) {
+      throw Exception('Senha é obrigatória');
+    }
+
+    // Find user by email
+    User? user;
+    for (final u in users.values) {
+      if (u.email == email) {
+        user = u;
+        break;
+      }
+    }
+
+    if (user == null) {
+      throw Exception('Usuário não encontrado');
+    }
+
+    // Verify password
+    if (!AuthService.verifyPassword(password, user.passwordHash)) {
+      throw Exception('Senha incorreta');
+    }
+
+    // Update last login
+    user.updatedAt = DateTime.now();
+
+    // Generate JWT token
+    final token = AuthService.generateJwtToken(user);
+
+    print('🔑 USER LOGGED IN: $email (ID: ${user.id})');
 
     final response = {
       'success': true,
-      'user': {
-        'id': 1,
-        'email': email,
-        'subscriptionTier': 'premium',
-        'remainingQueries': 95,
-        'lastLoginAt': DateTime.now().toIso8601String(),
-      },
-      'token': 'jwt_login_${DateTime.now().millisecondsSinceEpoch}_${email?.split('@')[0] ?? 'user'}',
+      'user': user.toPublicJson(),
+      'token': token,
       'message': 'Login realizado com sucesso!',
     };
 
@@ -1765,61 +1857,104 @@ Future<void> _handleLogin(HttpRequest request) async {
   } catch (e) {
     print('❌ Login error: $e');
     request.response
-      ..statusCode = 400
+      ..statusCode = 401
       ..headers.contentType = ContentType.json
-      ..write(jsonEncode({'error': 'Invalid login data', 'message': e.toString()}));
+      ..headers.add('Access-Control-Allow-Origin', '*')
+      ..write(jsonEncode({'success': false, 'error': e.toString()}));
     await request.response.close();
   }
 }
 
-Future<void> _handleMe(HttpRequest request) async {
-  final authHeader = request.headers.value('authorization');
-  if (authHeader == null || !authHeader.startsWith('Bearer ')) {
+Future<void> _handleMeReal(HttpRequest request, Map<String, User> users) async {
+  try {
+    final authHeader = request.headers.value('authorization');
+    if (authHeader == null || !authHeader.startsWith('Bearer ')) {
+      throw Exception('Token de autorização necessário');
+    }
+
+    final token = authHeader.substring(7);
+    final userId = AuthService.verifyJwtToken(token);
+    
+    if (userId == null) {
+      throw Exception('Token inválido ou expirado');
+    }
+
+    final user = users[userId.toString()];
+    if (user == null) {
+      throw Exception('Usuário não encontrado');
+    }
+
+    final response = {
+      'success': true,
+      'user': user.toPublicJson(),
+    };
+
+    request.response
+      ..headers.contentType = ContentType.json
+      ..headers.add('Access-Control-Allow-Origin', '*')
+      ..write(jsonEncode(response));
+    await request.response.close();
+  } catch (e) {
+    print('❌ /me error: $e');
     request.response
       ..statusCode = 401
       ..headers.contentType = ContentType.json
-      ..write(jsonEncode({'error': 'Authorization header required'}));
+      ..headers.add('Access-Control-Allow-Origin', '*')
+      ..write(jsonEncode({'success': false, 'error': e.toString()}));
     await request.response.close();
-    return;
   }
-
-  final response = {
-    'success': true,
-    'user': {
-      'id': 1,
-      'email': 'demo@aissist.com',
-      'subscriptionTier': 'premium',
-      'remainingQueries': 95,
-      'totalQueries': 5,
-      'createdAt': '2026-02-18T00:00:00Z',
-      'lastLoginAt': DateTime.now().toIso8601String(),
-    }
-  };
-
-  request.response
-    ..headers.contentType = ContentType.json
-    ..headers.add('Access-Control-Allow-Origin', '*')
-    ..write(jsonEncode(response));
-  await request.response.close();
 }
 
-Future<void> _handleUsage(HttpRequest request) async {
-  final response = {
-    'success': true,
-    'usage': {
-      'todayQueries': 3,
-      'dailyLimit': 100,
-      'remainingQueries': 97,
-      'resetTime': DateTime.now().add(const Duration(days: 1)).toIso8601String(),
-      'subscriptionTier': 'premium',
+Future<void> _handleUsageReal(HttpRequest request, Map<String, User> users) async {
+  try {
+    final authHeader = request.headers.value('authorization');
+    if (authHeader == null || !authHeader.startsWith('Bearer ')) {
+      throw Exception('Token de autorização necessário');
     }
-  };
 
-  request.response
-    ..headers.contentType = ContentType.json
-    ..headers.add('Access-Control-Allow-Origin', '*')
-    ..write(jsonEncode(response));
-  await request.response.close();
+    final token = authHeader.substring(7);
+    final userId = AuthService.verifyJwtToken(token);
+    
+    if (userId == null) {
+      throw Exception('Token inválido ou expirado');
+    }
+
+    final user = users[userId.toString()];
+    if (user == null) {
+      throw Exception('Usuário não encontrado');
+    }
+
+    // Calculate limits based on plan
+    final dailyLimit = user.subscriptionTier == 'pro' ? 500 
+                     : user.subscriptionTier == 'premium' ? 100 
+                     : 5;
+    final remainingQueries = dailyLimit - user.dailyUsageCount;
+
+    final response = {
+      'success': true,
+      'usage': {
+        'todayQueries': user.dailyUsageCount,
+        'dailyLimit': dailyLimit,
+        'remainingQueries': remainingQueries,
+        'resetTime': DateTime.now().add(const Duration(days: 1)).toIso8601String(),
+        'subscriptionTier': user.subscriptionTier,
+      }
+    };
+
+    request.response
+      ..headers.contentType = ContentType.json
+      ..headers.add('Access-Control-Allow-Origin', '*')
+      ..write(jsonEncode(response));
+    await request.response.close();
+  } catch (e) {
+    print('❌ /usage error: $e');
+    request.response
+      ..statusCode = 401
+      ..headers.contentType = ContentType.json
+      ..headers.add('Access-Control-Allow-Origin', '*')
+      ..write(jsonEncode({'success': false, 'error': e.toString()}));
+    await request.response.close();
+  }
 }
 
 Future<void> _handleDashboard(HttpRequest request) async {
@@ -2279,32 +2414,193 @@ Future<void> _handleDashboard(HttpRequest request) async {
 
 Future<void> _handleAdminPage(HttpRequest request) async {
   try {
-    final adminFile = File('admin-corrigido.html');
-    final htmlContent = await adminFile.readAsString();
+    // Try multiple file paths
+    List<String> possiblePaths = [
+      'admin-corrigido.html',
+      '/data/workspace/aissist/admin-corrigido.html',
+      'watchwise_server/web/static/demo.html',
+    ];
     
-    request.response
-      ..headers.contentType = ContentType.html
-      ..write(htmlContent);
-    await request.response.close();
+    String? htmlContent;
+    
+    for (final path in possiblePaths) {
+      try {
+        final adminFile = File(path);
+        if (await adminFile.exists()) {
+          htmlContent = await adminFile.readAsString();
+          print('✅ Admin panel loaded from: $path');
+          break;
+        }
+      } catch (e) {
+        // Continue trying other paths
+      }
+    }
+    
+    if (htmlContent != null) {
+      request.response
+        ..headers.contentType = ContentType.html
+        ..write(htmlContent);
+      await request.response.close();
+    } else {
+      throw Exception('Admin file not found');
+    }
   } catch (e) {
-    print('❌ Error serving admin.html: $e');
+    print('❌ Error serving admin page: $e');
     
-    // Fallback simple admin page
-    const fallbackContent = '''
+    // Admin panel with user management functionality
+    const adminContent = '''
 <!DOCTYPE html>
-<html>
-<head><title>Admin - AIssist</title></head>
-<body style="font-family: Arial; padding: 2rem; background: #1a1a1a; color: white;">
-    <h1>🔧 Admin Panel - AIssist</h1>
-    <p>Área administrativa em desenvolvimento.</p>
-    <p><a href="/" style="color: #667eea;">← Voltar ao início</a></p>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - AIssist</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0f1419;
+            color: white;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: #667eea;
+        }
+        .nav {
+            display: flex;
+            gap: 1rem;
+        }
+        .nav a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+        .nav a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+        .stat-label {
+            opacity: 0.8;
+        }
+        .content {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 2rem;
+        }
+        h2 {
+            margin-bottom: 1rem;
+            color: #667eea;
+        }
+        .info {
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🔧 Admin Panel - AIssist</div>
+            <div class="nav">
+                <a href="/">🏠 Home</a>
+                <a href="/dashboard">📊 Dashboard</a>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalUsers">--</div>
+                <div class="stat-label">Total de Usuários</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="todayQueries">--</div>
+                <div class="stat-label">Consultas Hoje</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="activeUsers">--</div>
+                <div class="stat-label">Usuários Ativos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">Sistema Online</div>
+            </div>
+        </div>
+
+        <div class="content">
+            <h2>Painel Administrativo</h2>
+            <div class="info">
+                <strong>ℹ️ Informações do Sistema:</strong><br>
+                • Autenticação JWT: ✅ Ativa<br>
+                • Rate Limiting: ✅ Ativo<br>
+                • Validação de usuários: ✅ Ativa<br>
+                • Database em memória: ⚠️ Temporário<br>
+                • Admin Panel completo: 🚧 Carregando admin-corrigido.html...
+            </div>
+            
+            <p>Sistema de administração completo está sendo carregado do arquivo admin-corrigido.html.</p>
+            <p>Se esta mensagem persiste, verifique se o arquivo existe no diretório correto.</p>
+            
+            <div style="margin-top: 2rem;">
+                <strong>Caminhos tentados:</strong><br>
+                • admin-corrigido.html<br>
+                • /data/workspace/aissist/admin-corrigido.html<br>
+                • watchwise_server/web/static/demo.html
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock stats for now
+        document.getElementById('totalUsers').textContent = '0';
+        document.getElementById('todayQueries').textContent = '0';
+        document.getElementById('activeUsers').textContent = '0';
+    </script>
 </body>
 </html>
     ''';
     
     request.response
       ..headers.contentType = ContentType.html
-      ..write(fallbackContent);
+      ..write(adminContent);
     await request.response.close();
   }
 }
