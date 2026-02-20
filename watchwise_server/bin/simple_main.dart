@@ -1023,7 +1023,7 @@ Future<void> _handleLandingPage(HttpRequest request) async {
 }
 
 Future<void> _handleLoginPage(HttpRequest request) async {
-  const htmlContent = '''
+  const htmlContent = r'''
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1168,12 +1168,12 @@ Future<void> _handleLoginPage(HttpRequest request) async {
         
         <form id="loginForm">
             <div class="form-group">
-                <label for="email">E-mail:</label>
+                <label for="email" id="emailLabel">E-mail:</label>
                 <input type="email" id="email" name="email" placeholder="seu@email.com" required>
             </div>
             
             <div class="form-group">
-                <label for="password">Senha:</label>
+                <label for="password" id="passwordLabel">Senha:</label>
                 <input type="password" id="password" name="password" placeholder="Sua senha" required>
             </div>
             
@@ -1183,17 +1183,68 @@ Future<void> _handleLoginPage(HttpRequest request) async {
             
             <div class="loading" id="loading">
                 <div class="spinner"></div>
-                Fazendo login...
+                <span id="loadingText">Fazendo login...</span>
             </div>
         </form>
         
         <div class="links">
-            <a href="/signup">Não tem conta? Cadastre-se</a><br><br>
-            <a href="/">← Voltar ao início</a>
+            <a href="/signup" id="signupLink">Não tem conta? Cadastre-se</a><br><br>
+            <a href="/" id="homeLink">← Voltar ao início</a>
         </div>
     </div>
 
     <script>
+        // Language detection and content
+        const isPortuguese = navigator.language.startsWith('pt') || 
+                            navigator.languages.some(lang => lang.startsWith('pt'));
+        
+        const content = {
+            pt: {
+                title: 'Login - AIssist',
+                emailLabel: 'E-mail:',
+                emailPlaceholder: 'seu@email.com',
+                passwordLabel: 'Senha:',
+                passwordPlaceholder: 'Sua senha',
+                loginBtn: '🔑 Entrar',
+                loadingText: 'Fazendo login...',
+                signupLink: 'Não tem conta? Cadastre-se',
+                homeLink: '← Voltar ao início',
+                successMsg: '✅ Login realizado com sucesso!',
+                errorPrefix: '❌ '
+            },
+            en: {
+                title: 'Login - AIssist',
+                emailLabel: 'Email:',
+                emailPlaceholder: 'your@email.com',
+                passwordLabel: 'Password:',
+                passwordPlaceholder: 'Your password',
+                loginBtn: '🔑 Sign In',
+                loadingText: 'Signing in...',
+                signupLink: 'Don\'t have an account? Sign up',
+                homeLink: '← Back to home',
+                successMsg: '✅ Successfully signed in!',
+                errorPrefix: '❌ '
+            }
+        };
+
+        const lang = isPortuguese ? 'pt' : 'en';
+
+        function updateContent() {
+            const c = content[lang];
+            document.title = c.title;
+            document.documentElement.lang = lang;
+            document.getElementById('emailLabel').textContent = c.emailLabel;
+            document.getElementById('email').placeholder = c.emailPlaceholder;
+            document.getElementById('passwordLabel').textContent = c.passwordLabel;
+            document.getElementById('password').placeholder = c.passwordPlaceholder;
+            document.getElementById('loginBtn').textContent = c.loginBtn;
+            document.getElementById('loadingText').textContent = c.loadingText;
+            document.getElementById('signupLink').textContent = c.signupLink;
+            document.getElementById('homeLink').textContent = c.homeLink;
+        }
+
+        document.addEventListener('DOMContentLoaded', updateContent);
+
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -1226,7 +1277,7 @@ Future<void> _handleLoginPage(HttpRequest request) async {
                     
                     // Show success message
                     message.className = 'message success';
-                    message.textContent = '✅ ' + data.message;
+                    message.textContent = content[lang].successMsg;
                     message.style.display = 'block';
                     
                     // Redirect to dashboard
@@ -1234,11 +1285,11 @@ Future<void> _handleLoginPage(HttpRequest request) async {
                         window.location.href = '/dashboard';
                     }, 1500);
                 } else {
-                    throw new Error(data.message || 'Erro no login');
+                    throw new Error(data.message || 'Login error');
                 }
             } catch (error) {
                 message.className = 'message error';
-                message.textContent = '❌ ' + error.message;
+                message.textContent = content[lang].errorPrefix + error.message;
                 message.style.display = 'block';
             } finally {
                 loginBtn.disabled = false;
@@ -1257,7 +1308,7 @@ Future<void> _handleLoginPage(HttpRequest request) async {
 }
 
 Future<void> _handleSignupPage(HttpRequest request) async {
-  const htmlContent = '''
+  const htmlContent = r'''
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1414,21 +1465,21 @@ Future<void> _handleSignupPage(HttpRequest request) async {
         
         <form id="signupForm">
             <div class="form-group">
-                <label for="email">E-mail:</label>
+                <label for="email" id="emailLabel">E-mail:</label>
                 <input type="email" id="email" name="email" placeholder="seu@email.com" required>
             </div>
             
             <div class="form-group">
-                <label for="password">Senha:</label>
+                <label for="password" id="passwordLabel">Senha:</label>
                 <input type="password" id="password" name="password" placeholder="Mínimo 6 caracteres" required minlength="6">
             </div>
             
             <div class="form-group">
-                <label for="planType">Plano:</label>
+                <label for="planType" id="planLabel">Plano:</label>
                 <select id="planType" name="planType" required>
-                    <option value="free">Free - 5 consultas/dia</option>
-                    <option value="premium">Premium - 100 consultas/dia (R\$ 19,90/mês)</option>
-                    <option value="pro">Pro - 500 consultas/dia (R\$ 39,90/mês)</option>
+                    <option value="free" id="freePlan">Free - 5 consultas/dia</option>
+                    <option value="premium" id="premiumPlan">Premium - 100 consultas/dia (R\$ 19,90/mês)</option>
+                    <option value="pro" id="proPlan">Pro - 500 consultas/dia (R\$ 39,90/mês)</option>
                 </select>
                 <div class="plan-info" id="planInfo">
                     ✅ Plano Free: 5 consultas por dia, sem custo
@@ -1441,34 +1492,98 @@ Future<void> _handleSignupPage(HttpRequest request) async {
             
             <div class="loading" id="loading">
                 <div class="spinner"></div>
-                Criando sua conta...
+                <span id="loadingText">Criando sua conta...</span>
             </div>
         </form>
         
         <div class="links">
-            <a href="/login">Já tem conta? Faça login</a><br><br>
-            <a href="/">← Voltar ao início</a>
+            <a href="/login" id="loginLink">Já tem conta? Faça login</a><br><br>
+            <a href="/" id="homeLink">← Voltar ao início</a>
         </div>
     </div>
 
     <script>
+        // Language detection and content
+        const isPortuguese = navigator.language.startsWith('pt') || 
+                            navigator.languages.some(lang => lang.startsWith('pt'));
+        
+        const content = {
+            pt: {
+                title: 'Cadastro - AIssist',
+                emailLabel: 'E-mail:',
+                emailPlaceholder: 'seu@email.com',
+                passwordLabel: 'Senha:',
+                passwordPlaceholder: 'Mínimo 6 caracteres',
+                planLabel: 'Plano:',
+                freePlan: 'Free - 5 consultas/dia',
+                premiumPlan: 'Premium - 100 consultas/dia (R$ 19,90/mês)',
+                proPlan: 'Pro - 500 consultas/dia (R$ 39,90/mês)',
+                signupBtn: '🚀 Criar Conta',
+                loadingText: 'Criando sua conta...',
+                loginLink: 'Já tem conta? Faça login',
+                homeLink: '← Voltar ao início',
+                planInfos: {
+                    free: '✅ Plano Free: 5 consultas por dia, sem custo',
+                    premium: '💎 Plano Premium: 100 consultas por dia, R$ 19,90/mês',
+                    pro: '🚀 Plano Pro: 500 consultas por dia, R$ 39,90/mês'
+                },
+                successMsg: '✅ Conta criada com sucesso! Bem-vindo ao AIssist.',
+                errorPrefix: '❌ '
+            },
+            en: {
+                title: 'Sign Up - AIssist',
+                emailLabel: 'Email:',
+                emailPlaceholder: 'your@email.com',
+                passwordLabel: 'Password:',
+                passwordPlaceholder: 'Minimum 6 characters',
+                planLabel: 'Plan:',
+                freePlan: 'Free - 5 queries/day',
+                premiumPlan: 'Premium - 100 queries/day ($19.90/month)',
+                proPlan: 'Pro - 500 queries/day ($39.90/month)',
+                signupBtn: '🚀 Create Account',
+                loadingText: 'Creating your account...',
+                loginLink: 'Already have an account? Sign in',
+                homeLink: '← Back to home',
+                planInfos: {
+                    free: '✅ Free Plan: 5 queries per day, no cost',
+                    premium: '💎 Premium Plan: 100 queries per day, $19.90/month',
+                    pro: '🚀 Pro Plan: 500 queries per day, $39.90/month'
+                },
+                successMsg: '✅ Account created successfully! Welcome to AIssist.',
+                errorPrefix: '❌ '
+            }
+        };
+
+        const lang = isPortuguese ? 'pt' : 'en';
+
+        function updateContent() {
+            const c = content[lang];
+            document.title = c.title;
+            document.documentElement.lang = lang;
+            document.getElementById('emailLabel').textContent = c.emailLabel;
+            document.getElementById('email').placeholder = c.emailPlaceholder;
+            document.getElementById('passwordLabel').textContent = c.passwordLabel;
+            document.getElementById('password').placeholder = c.passwordPlaceholder;
+            document.getElementById('planLabel').textContent = c.planLabel;
+            document.getElementById('freePlan').textContent = c.freePlan;
+            document.getElementById('premiumPlan').textContent = c.premiumPlan;
+            document.getElementById('proPlan').textContent = c.proPlan;
+            document.getElementById('signupBtn').textContent = c.signupBtn;
+            document.getElementById('loadingText').textContent = c.loadingText;
+            document.getElementById('loginLink').textContent = c.loginLink;
+            document.getElementById('homeLink').textContent = c.homeLink;
+            document.getElementById('planInfo').innerHTML = c.planInfos.free;
+        }
+
         // Update plan info
         document.getElementById('planType').addEventListener('change', (e) => {
             const planInfo = document.getElementById('planInfo');
             const value = e.target.value;
-            
-            switch(value) {
-                case 'free':
-                    planInfo.innerHTML = '✅ Plano Free: 5 consultas por dia, sem custo';
-                    break;
-                case 'premium':
-                    planInfo.innerHTML = '💎 Plano Premium: 100 consultas por dia, R\$ 19,90/mês';
-                    break;
-                case 'pro':
-                    planInfo.innerHTML = '🚀 Plano Pro: 500 consultas por dia, R\$ 39,90/mês';
-                    break;
-            }
+            const c = content[lang];
+            planInfo.innerHTML = c.planInfos[value];
         });
+
+        document.addEventListener('DOMContentLoaded', updateContent);
         
         document.getElementById('signupForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -1503,7 +1618,7 @@ Future<void> _handleSignupPage(HttpRequest request) async {
                     
                     // Show success message
                     message.className = 'message success';
-                    message.textContent = '✅ ' + data.message;
+                    message.textContent = content[lang].successMsg;
                     message.style.display = 'block';
                     
                     // Redirect to dashboard
@@ -1511,11 +1626,11 @@ Future<void> _handleSignupPage(HttpRequest request) async {
                         window.location.href = '/dashboard';
                     }, 2000);
                 } else {
-                    throw new Error(data.message || 'Erro no cadastro');
+                    throw new Error(data.message || 'Signup error');
                 }
             } catch (error) {
                 message.className = 'message error';
-                message.textContent = '❌ ' + error.message;
+                message.textContent = content[lang].errorPrefix + error.message;
                 message.style.display = 'block';
             } finally {
                 signupBtn.disabled = false;
@@ -1708,7 +1823,7 @@ Future<void> _handleUsage(HttpRequest request) async {
 }
 
 Future<void> _handleDashboard(HttpRequest request) async {
-  const htmlContent = '''
+  const htmlContent = r'''
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1917,21 +2032,21 @@ Future<void> _handleDashboard(HttpRequest request) async {
                 <div id="userName">Carregando...</div>
                 <div id="userPlan" style="font-size: 0.8rem; opacity: 0.7;">...</div>
             </div>
-            <a href="#" class="logout-btn" onclick="logout()">🚪 Sair</a>
+            <a href="#" class="logout-btn" onclick="logout()" id="logoutBtn">🚪 Sair</a>
         </div>
     </div>
 
     <div class="main">
         <div class="welcome">
             <h1 id="welcomeMessage">Bem-vindo ao AIssist! 👋</h1>
-            <p>Seu assistente inteligente para descobrir entretenimento personalizado</p>
+            <p id="welcomeSubtitle">Seu assistente inteligente para descobrir entretenimento personalizado</p>
         </div>
 
         <div class="dashboard-grid">
             <div class="card">
-                <h3>📊 Suas Estatísticas</h3>
+                <h3 id="statsTitle">📊 Suas Estatísticas</h3>
                 <div class="stat-number" id="remainingQueries">--</div>
-                <div class="stat-label">Consultas restantes hoje</div>
+                <div class="stat-label" id="remainingLabel">Consultas restantes hoje</div>
                 <div class="progress-bar">
                     <div class="progress-fill" id="progressFill" style="width: 0%"></div>
                 </div>
@@ -1939,26 +2054,26 @@ Future<void> _handleDashboard(HttpRequest request) async {
             </div>
 
             <div class="card">
-                <h3>🎬 Recomendações</h3>
-                <p>Baseadas no seu histórico e preferências:</p>
+                <h3 id="recommendationsTitle">🎬 Recomendações</h3>
+                <p id="recommendationsSubtitle">Baseadas no seu histórico e preferências:</p>
                 <div id="recommendations" style="margin-top: 1rem;">
-                    <div style="opacity: 0.7;">Faça sua primeira consulta para receber recomendações personalizadas!</div>
+                    <div style="opacity: 0.7;" id="noRecommendations">Faça sua primeira consulta para receber recomendações personalizadas!</div>
                 </div>
             </div>
 
             <div class="card">
-                <h3>📈 Atividade Recente</h3>
+                <h3 id="activityTitle">📈 Atividade Recente</h3>
                 <div id="recentActivity">
-                    <div style="opacity: 0.7;">Nenhuma atividade recente</div>
+                    <div style="opacity: 0.7;" id="noActivity">Nenhuma atividade recente</div>
                 </div>
             </div>
         </div>
 
         <div class="chat-container">
-            <h3>🤖 Chat com IA - Pergunte sobre filmes e séries</h3>
+            <h3 id="chatTitle">🤖 Chat com IA - Pergunte sobre filmes e séries</h3>
             <div class="chat-messages" id="chatMessages">
                 <div class="message ai">
-                    <strong>AIssist:</strong> Olá! Sou seu assistente de entretenimento. Pergunte sobre filmes, séries, ou peça recomendações personalizadas! 🎬✨
+                    <strong>AIssist:</strong> <span id="aiWelcome">Olá! Sou seu assistente de entretenimento. Pergunte sobre filmes, séries, ou peça recomendações personalizadas! 🎬✨</span>
                 </div>
             </div>
             <div class="chat-input">
@@ -1969,6 +2084,55 @@ Future<void> _handleDashboard(HttpRequest request) async {
     </div>
 
     <script>
+        // Language detection and content
+        const isPortuguese = navigator.language.startsWith('pt') || 
+                            navigator.languages.some(lang => lang.startsWith('pt'));
+        
+        const content = {
+            pt: {
+                title: 'Dashboard - AIssist',
+                logoutBtn: '🚪 Sair',
+                welcomeMessage: 'Bem-vindo ao AIssist! 👋',
+                welcomeSubtitle: 'Seu assistente inteligente para descobrir entretenimento personalizado',
+                statsTitle: '📊 Suas Estatísticas',
+                remainingLabel: 'Consultas restantes hoje',
+                recommendationsTitle: '🎬 Recomendações',
+                recommendationsSubtitle: 'Baseadas no seu histórico e preferências:',
+                noRecommendations: 'Faça sua primeira consulta para receber recomendações personalizadas!',
+                activityTitle: '📈 Atividade Recente',
+                noActivity: 'Nenhuma atividade recente',
+                chatTitle: '🤖 Chat com IA - Pergunte sobre filmes e séries',
+                chatPlaceholder: 'Ex: \'Quero um filme de ficção científica para hoje à noite\'',
+                sendBtn: '🚀 Enviar',
+                sendingBtn: '⏳ Pensando...',
+                aiWelcome: 'Olá! Sou seu assistente de entretenimento. Pergunte sobre filmes, séries, ou peça recomendações personalizadas! 🎬✨',
+                errorMsg: '❌ Desculpe, ocorreu um erro: ',
+                planPrefix: 'Plano '
+            },
+            en: {
+                title: 'Dashboard - AIssist',
+                logoutBtn: '🚪 Sign Out',
+                welcomeMessage: 'Welcome to AIssist! 👋',
+                welcomeSubtitle: 'Your smart assistant to discover personalized entertainment',
+                statsTitle: '📊 Your Statistics',
+                remainingLabel: 'Queries remaining today',
+                recommendationsTitle: '🎬 Recommendations',
+                recommendationsSubtitle: 'Based on your history and preferences:',
+                noRecommendations: 'Make your first query to receive personalized recommendations!',
+                activityTitle: '📈 Recent Activity',
+                noActivity: 'No recent activity',
+                chatTitle: '🤖 AI Chat - Ask about movies and series',
+                chatPlaceholder: 'Ex: \'I want a sci-fi movie for tonight\'',
+                sendBtn: '🚀 Send',
+                sendingBtn: '⏳ Thinking...',
+                aiWelcome: 'Hello! I\'m your entertainment assistant. Ask about movies, series, or request personalized recommendations! 🎬✨',
+                errorMsg: '❌ Sorry, an error occurred: ',
+                planPrefix: 'Plan '
+            }
+        };
+
+        const lang = isPortuguese ? 'pt' : 'en';
+
         // Check authentication
         const token = localStorage.getItem('auth_token');
         const userData = localStorage.getItem('user_data');
@@ -1978,12 +2142,39 @@ Future<void> _handleDashboard(HttpRequest request) async {
         }
         
         const user = JSON.parse(userData);
+
+        function updateContent() {
+            const c = content[lang];
+            document.title = c.title;
+            document.documentElement.lang = lang;
+            document.getElementById('logoutBtn').textContent = c.logoutBtn;
+            document.getElementById('welcomeSubtitle').textContent = c.welcomeSubtitle;
+            document.getElementById('statsTitle').textContent = c.statsTitle;
+            document.getElementById('remainingLabel').textContent = c.remainingLabel;
+            document.getElementById('recommendationsTitle').textContent = c.recommendationsTitle;
+            document.getElementById('recommendationsSubtitle').textContent = c.recommendationsSubtitle;
+            document.getElementById('noRecommendations').textContent = c.noRecommendations;
+            document.getElementById('activityTitle').textContent = c.activityTitle;
+            document.getElementById('noActivity').textContent = c.noActivity;
+            document.getElementById('chatTitle').textContent = c.chatTitle;
+            document.getElementById('messageInput').placeholder = c.chatPlaceholder;
+            document.getElementById('sendBtn').textContent = c.sendBtn;
+            document.getElementById('aiWelcome').textContent = c.aiWelcome;
+        }
         
         // Update user info
         document.getElementById('userAvatar').textContent = user.email.charAt(0).toUpperCase();
         document.getElementById('userName').textContent = user.email.split('@')[0];
         document.getElementById('userPlan').textContent = user.subscriptionTier.charAt(0).toUpperCase() + user.subscriptionTier.slice(1);
-        document.getElementById('welcomeMessage').textContent = 'Bem-vindo, ' + user.email.split('@')[0] + '! 👋';
+        
+        // Update content based on language
+        updateContent();
+        
+        // Set welcome message with username
+        const welcomeText = lang === 'pt' ? 
+            'Bem-vindo, ' + user.email.split('@')[0] + '! 👋' : 
+            'Welcome, ' + user.email.split('@')[0] + '! 👋';
+        document.getElementById('welcomeMessage').textContent = welcomeText;
         
         // Update stats
         document.getElementById('remainingQueries').textContent = user.remainingQueries;
@@ -1993,7 +2184,8 @@ Future<void> _handleDashboard(HttpRequest request) async {
         const progressPercent = (usedQueries / totalQueries) * 100;
         
         document.getElementById('progressFill').style.width = progressPercent + '%';
-        document.getElementById('planDetails').textContent = 'Plano ' + user.subscriptionTier + ': ' + usedQueries + '/' + totalQueries + ' consultas usadas';
+        const usedText = lang === 'pt' ? ' consultas usadas' : ' queries used';
+        document.getElementById('planDetails').textContent = content[lang].planPrefix + user.subscriptionTier + ': ' + usedQueries + '/' + totalQueries + usedText;
         
         // Chat functionality
         document.getElementById('messageInput').addEventListener('keypress', (e) => {
@@ -2014,13 +2206,14 @@ Future<void> _handleDashboard(HttpRequest request) async {
             // Add user message
             const userMessage = document.createElement('div');
             userMessage.className = 'message user';
-            userMessage.innerHTML = '<strong>Você:</strong> ' + message;
+            const youLabel = lang === 'pt' ? 'Você:' : 'You:';
+            userMessage.innerHTML = '<strong>' + youLabel + '</strong> ' + message;
             chatMessages.appendChild(userMessage);
             
             // Clear input and disable button
             input.value = '';
             sendBtn.disabled = true;
-            sendBtn.textContent = '⏳ Pensando...';
+            sendBtn.textContent = content[lang].sendingBtn;
             
             try {
                 const response = await fetch('/ai/chat', {
@@ -2050,19 +2243,20 @@ Future<void> _handleDashboard(HttpRequest request) async {
                         const newUsedQueries = totalQueries - data.queriesRemaining;
                         const newProgressPercent = (newUsedQueries / totalQueries) * 100;
                         document.getElementById('progressFill').style.width = newProgressPercent + '%';
-                        document.getElementById('planDetails').textContent = 'Plano ' + user.subscriptionTier + ': ' + newUsedQueries + '/' + totalQueries + ' consultas usadas';
+                        const usedText = lang === 'pt' ? ' consultas usadas' : ' queries used';
+                        document.getElementById('planDetails').textContent = content[lang].planPrefix + user.subscriptionTier + ': ' + newUsedQueries + '/' + totalQueries + usedText;
                     }
                 } else {
-                    throw new Error(data.error || 'Erro na consulta');
+                    throw new Error(data.error || 'Query error');
                 }
             } catch (error) {
                 const errorMessage = document.createElement('div');
                 errorMessage.className = 'message ai';
-                errorMessage.innerHTML = '<strong>AIssist:</strong> ❌ Desculpe, ocorreu um erro: ' + error.message;
+                errorMessage.innerHTML = '<strong>AIssist:</strong> ' + content[lang].errorMsg + error.message;
                 chatMessages.appendChild(errorMessage);
             } finally {
                 sendBtn.disabled = false;
-                sendBtn.textContent = '🚀 Enviar';
+                sendBtn.textContent = content[lang].sendBtn;
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }
         }
