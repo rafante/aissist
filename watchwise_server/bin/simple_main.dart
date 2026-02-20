@@ -20,6 +20,9 @@ Future<void> main() async {
   final Map<String, SimpleUser> _users = {};
   int _nextUserId = 1;
   
+  // In-memory query log
+  final List<Map<String, dynamic>> _queryLog = [];
+  
   // Create HTTP server  
   final port = int.fromEnvironment('PORT', defaultValue: 8081);
   final server = await HttpServer.bind(InternetAddress.anyIPv4, port);
@@ -61,6 +64,15 @@ Future<void> main() async {
         case '/admin':
           await _handleAdminPage(request);
           break;
+        case '/admin/stats':
+          await _handleAdminStats(request, _users);
+          break;
+        case '/admin/users':
+          await _handleAdminUsers(request, _users, _nextUserId++);
+          break;
+        case '/admin/queries':
+          await _handleAdminQueries(request, queryLog: _queryLog);
+          break;
         case '/health':
           await _handleHealth(request);
           break;
@@ -74,7 +86,7 @@ Future<void> main() async {
           await _handleSearchTV(request, tmdb, query);
           break;
         case '/ai/chat':
-          await _handleAIChat(request, tmdb, llmService, query, _users);
+          await _handleAIChat(request, tmdb, llmService, query, _users, _queryLog);
           break;
         case '/auth/signup':
           await _handleSignupReal(request, _users, _nextUserId++);
@@ -89,7 +101,13 @@ Future<void> main() async {
           await _handleUsageReal(request, _users);
           break;
         default:
-          await _handle404(request);
+          // Handle paths with parameters (like /admin/users/123)
+          if (path.startsWith('/admin/users/')) {
+            final userId = path.split('/').last;
+            await _handleAdminUserById(request, _users, userId);
+          } else {
+            await _handle404(request);
+          }
       }
     } catch (e) {
       await _handleError(request, e);
@@ -243,7 +261,7 @@ Future<void> _handleSearchTV(HttpRequest request, TmdbService tmdb, Map<String, 
   await request.response.close();
 }
 
-Future<void> _handleAIChat(HttpRequest request, TmdbService tmdb, RevivaLLMService llmService, Map<String, String> query, Map<String, SimpleUser> users) async {
+Future<void> _handleAIChat(HttpRequest request, TmdbService tmdb, RevivaLLMService llmService, Map<String, String> query, Map<String, SimpleUser> users, List<Map<String, dynamic>> queryLog) async {
   if (request.method != 'POST') {
     request.response
       ..statusCode = 405
@@ -304,16 +322,37 @@ Future<void> _handleAIChat(HttpRequest request, TmdbService tmdb, RevivaLLMServi
     }
     
     // Generate AI response
+    final startTime = DateTime.now();
     final aiResponse = await llmService.generateMovieRecommendation(
       userQuery: userQuery,
       movieContext: movieContext,
     );
+    final endTime = DateTime.now();
+    final processingTime = endTime.difference(startTime).inMilliseconds;
     
     // Update usage count
     user.dailyUsageCount++;
     final queriesRemaining = dailyLimit - user.dailyUsageCount;
 
-    print('🤖 AI QUERY: User ${user.id} (${user.email}): "$userQuery" - Remaining: $queriesRemaining');
+    // Log query for admin panel
+    queryLog.add({
+      'timestamp': DateTime.now().toIso8601String(),
+      'userId': user.id,
+      'userEmail': user.email,
+      'query': userQuery,
+      'response': aiResponse.length > 100 ? aiResponse.substring(0, 100) + '...' : aiResponse,
+      'processingTime': processingTime,
+      'success': true,
+      'movieSuggestions': movieContext.length,
+      'subscriptionTier': user.subscriptionTier,
+    });
+
+    // Keep only last 1000 queries to prevent memory issues
+    if (queryLog.length > 1000) {
+      queryLog.removeRange(0, queryLog.length - 1000);
+    }
+
+    print('🤖 AI QUERY: User ${user.id} (${user.email}): "$userQuery" - Remaining: $queriesRemaining - Time: ${processingTime}ms');
 
     request.response
       ..headers.contentType = ContentType.json
@@ -334,6 +373,35 @@ Future<void> _handleAIChat(HttpRequest request, TmdbService tmdb, RevivaLLMServi
     
   } catch (e) {
     print('❌ Error in AI chat: $e');
+    
+    // Try to get user info for error logging
+    try {
+      final authHeader = request.headers.value('authorization');
+      if (authHeader != null && authHeader.startsWith('Bearer ')) {
+        final token = authHeader.substring(7);
+        final userId = SimpleAuthService.verifyJwtToken(token);
+        if (userId != null) {
+          final user = users[userId.toString()];
+          if (user != null) {
+            // Log error query
+            queryLog.add({
+              'timestamp': DateTime.now().toIso8601String(),
+              'userId': user.id,
+              'userEmail': user.email,
+              'query': 'Error occurred',
+              'response': 'Error: ${e.toString()}',
+              'processingTime': 0,
+              'success': false,
+              'movieSuggestions': 0,
+              'subscriptionTier': user.subscriptionTier,
+            });
+          }
+        }
+      }
+    } catch (logError) {
+      // Ignore logging errors
+    }
+    
     request.response
       ..statusCode = 400
       ..headers.contentType = ContentType.json
@@ -2414,11 +2482,12 @@ Future<void> _handleDashboard(HttpRequest request) async {
 
 Future<void> _handleAdminPage(HttpRequest request) async {
   try {
-    // Try multiple file paths
+    // Try to load the complete admin panel
     List<String> possiblePaths = [
+      'admin-panel-complete.html',
+      '/data/workspace/aissist/admin-panel-complete.html',
       'admin-corrigido.html',
       '/data/workspace/aissist/admin-corrigido.html',
-      'watchwise_server/web/static/demo.html',
     ];
     
     String? htmlContent;
@@ -2601,6 +2670,264 @@ Future<void> _handleAdminPage(HttpRequest request) async {
     request.response
       ..headers.contentType = ContentType.html
       ..write(adminContent);
+    await request.response.close();
+  }
+}
+
+// ADMIN ENDPOINTS
+
+Future<void> _handleAdminStats(HttpRequest request, Map<String, SimpleUser> users) async {
+  if (request.method != 'GET') {
+    request.response
+      ..statusCode = 405
+      ..headers.contentType = ContentType.json
+      ..headers.add('Access-Control-Allow-Origin', '*')
+      ..write(jsonEncode({'error': 'Method not allowed'}));
+    await request.response.close();
+    return;
+  }
+
+  try {
+    final totalUsers = users.length;
+    final totalQueries = users.values.fold(0, (sum, user) => sum + user.dailyUsageCount);
+    final activeUsers = users.values.where((user) => user.dailyUsageCount > 0).length;
+    
+    // Calculate estimated revenue
+    final premiumUsers = users.values.where((user) => user.subscriptionTier == 'premium').length;
+    final proUsers = users.values.where((user) => user.subscriptionTier == 'pro').length;
+    final estimatedRevenue = (premiumUsers * 19.90) + (proUsers * 39.90);
+
+    final stats = {
+      'totalUsers': totalUsers,
+      'totalQueries': totalQueries,
+      'activeUsers': activeUsers,
+      'revenue': estimatedRevenue.toStringAsFixed(2),
+      'usersByPlan': {
+        'free': users.values.where((user) => user.subscriptionTier == 'free').length,
+        'premium': premiumUsers,
+        'pro': proUsers,
+      }
+    };
+
+    request.response
+      ..headers.contentType = ContentType.json
+      ..headers.add('Access-Control-Allow-Origin', '*')
+      ..write(jsonEncode(stats));
+    await request.response.close();
+  } catch (e) {
+    print('❌ Error in admin stats: $e');
+    request.response
+      ..statusCode = 500
+      ..headers.contentType = ContentType.json
+      ..headers.add('Access-Control-Allow-Origin', '*')
+      ..write(jsonEncode({'error': e.toString()}));
+    await request.response.close();
+  }
+}
+
+Future<void> _handleAdminUsers(HttpRequest request, Map<String, SimpleUser> users, int nextUserId) async {
+  request.response.headers.add('Access-Control-Allow-Origin', '*');
+
+  try {
+    if (request.method == 'GET') {
+      // List all users
+      final userList = users.values.map((user) => {
+        ...user.toPublicJson(),
+        'passwordHash': null, // Don't expose password hashes
+      }).toList();
+
+      request.response
+        ..headers.contentType = ContentType.json
+        ..write(jsonEncode({'users': userList}));
+      await request.response.close();
+
+    } else if (request.method == 'POST') {
+      // Create new user
+      final body = await utf8.decoder.bind(request).join();
+      final data = jsonDecode(body) as Map<String, dynamic>;
+      
+      final email = data['email'] as String?;
+      final password = data['password'] as String?;
+      final subscriptionTier = data['subscriptionTier'] as String? ?? 'free';
+      final dailyUsageCount = data['dailyUsageCount'] as int? ?? 0;
+
+      // Validation
+      if (email == null || email.isEmpty) {
+        throw Exception('Email é obrigatório');
+      }
+      if (password == null || password.length < 6) {
+        throw Exception('Senha deve ter pelo menos 6 caracteres');
+      }
+
+      // Check if user already exists
+      if (users.values.any((u) => u.email == email)) {
+        throw Exception('Email já está em uso');
+      }
+
+      // Create new user
+      final user = SimpleUser(
+        id: nextUserId,
+        email: email,
+        passwordHash: SimpleAuthService.hashPassword(password),
+        subscriptionTier: subscriptionTier,
+        dailyUsageCount: dailyUsageCount,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      // Save user
+      users[nextUserId.toString()] = user;
+
+      print('✅ ADMIN: Created user $email (ID: $nextUserId)');
+
+      request.response
+        ..headers.contentType = ContentType.json
+        ..write(jsonEncode({
+          'success': true,
+          'user': user.toPublicJson(),
+          'message': 'Usuário criado com sucesso'
+        }));
+      await request.response.close();
+
+    } else {
+      request.response
+        ..statusCode = 405
+        ..headers.contentType = ContentType.json
+        ..write(jsonEncode({'error': 'Method not allowed'}));
+      await request.response.close();
+    }
+  } catch (e) {
+    print('❌ Error in admin users: $e');
+    request.response
+      ..statusCode = 400
+      ..headers.contentType = ContentType.json
+      ..write(jsonEncode({'error': e.toString()}));
+    await request.response.close();
+  }
+}
+
+Future<void> _handleAdminUserById(HttpRequest request, Map<String, SimpleUser> users, String userIdStr) async {
+  request.response.headers.add('Access-Control-Allow-Origin', '*');
+
+  try {
+    final userId = int.tryParse(userIdStr);
+    if (userId == null) {
+      throw Exception('ID de usuário inválido');
+    }
+
+    final user = users[userId.toString()];
+    if (user == null) {
+      request.response
+        ..statusCode = 404
+        ..headers.contentType = ContentType.json
+        ..write(jsonEncode({'error': 'Usuário não encontrado'}));
+      await request.response.close();
+      return;
+    }
+
+    if (request.method == 'GET') {
+      // Get specific user
+      request.response
+        ..headers.contentType = ContentType.json
+        ..write(jsonEncode({'user': user.toPublicJson()}));
+      await request.response.close();
+
+    } else if (request.method == 'PUT') {
+      // Update user
+      final body = await utf8.decoder.bind(request).join();
+      final data = jsonDecode(body) as Map<String, dynamic>;
+      
+      // Update allowed fields
+      if (data.containsKey('subscriptionTier')) {
+        user.subscriptionTier = data['subscriptionTier'];
+      }
+      if (data.containsKey('dailyUsageCount')) {
+        user.dailyUsageCount = data['dailyUsageCount'];
+      }
+      if (data.containsKey('email')) {
+        // Check if new email is already in use
+        final newEmail = data['email'] as String;
+        if (users.values.any((u) => u.email == newEmail && u.id != userId)) {
+          throw Exception('Email já está em uso');
+        }
+        user.email = newEmail;
+      }
+
+      user.updatedAt = DateTime.now();
+
+      print('✅ ADMIN: Updated user ${user.email} (ID: $userId)');
+
+      request.response
+        ..headers.contentType = ContentType.json
+        ..write(jsonEncode({
+          'success': true,
+          'user': user.toPublicJson(),
+          'message': 'Usuário atualizado com sucesso'
+        }));
+      await request.response.close();
+
+    } else if (request.method == 'DELETE') {
+      // Delete user
+      users.remove(userId.toString());
+
+      print('✅ ADMIN: Deleted user ${user.email} (ID: $userId)');
+
+      request.response
+        ..headers.contentType = ContentType.json
+        ..write(jsonEncode({
+          'success': true,
+          'message': 'Usuário excluído com sucesso'
+        }));
+      await request.response.close();
+
+    } else {
+      request.response
+        ..statusCode = 405
+        ..headers.contentType = ContentType.json
+        ..write(jsonEncode({'error': 'Method not allowed'}));
+      await request.response.close();
+    }
+  } catch (e) {
+    print('❌ Error in admin user by ID: $e');
+    request.response
+      ..statusCode = 400
+      ..headers.contentType = ContentType.json
+      ..write(jsonEncode({'error': e.toString()}));
+    await request.response.close();
+  }
+}
+
+Future<void> _handleAdminQueries(HttpRequest request, {List<Map<String, dynamic>>? queryLog}) async {
+  if (request.method != 'GET') {
+    request.response
+      ..statusCode = 405
+      ..headers.contentType = ContentType.json
+      ..headers.add('Access-Control-Allow-Origin', '*')
+      ..write(jsonEncode({'error': 'Method not allowed'}));
+    await request.response.close();
+    return;
+  }
+
+  try {
+    // For now, return empty list since we don't have query logging yet
+    // TODO: Implement actual query logging in _handleAIChat
+    final queries = queryLog ?? [];
+
+    request.response
+      ..headers.contentType = ContentType.json
+      ..headers.add('Access-Control-Allow-Origin', '*')
+      ..write(jsonEncode({
+        'queries': queries,
+        'total': queries.length
+      }));
+    await request.response.close();
+  } catch (e) {
+    print('❌ Error in admin queries: $e');
+    request.response
+      ..statusCode = 500
+      ..headers.contentType = ContentType.json
+      ..headers.add('Access-Control-Allow-Origin', '*')
+      ..write(jsonEncode({'error': e.toString()}));
     await request.response.close();
   }
 }
