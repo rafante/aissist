@@ -1,4 +1,4 @@
-FORCE DEPLOY: 2026-02-20 15:30:00 UTC
-ADMIN PANEL v1.1.0 DEPLOY
-COMMIT: 67a83c1 - Admin panel completo + CRUD + Analytics
-FEATURES: Admin interface, user management, query logging, real-time stats
+FORCE DEPLOY: 2026-02-20 15:45:00 UTC  
+ADMIN PANEL UI/UX PROFISSIONAL DEPLOY
+COMMIT: d8240e7 - Interface moderna, tema automático, modals, toasts
+FEATURES: Auto light/dark theme, real-time search, edit users, modern UX
