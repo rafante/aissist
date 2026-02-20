@@ -2496,19 +2496,43 @@ Future<void> _handleAdminPage(HttpRequest request) async {
             --success-color: #48bb78;
             --warning-color: #ed8936;
             --danger-color: #f56565;
-            --dark-bg: #0f1419;
-            --card-bg: rgba(255, 255, 255, 0.05);
-            --border-color: rgba(255, 255, 255, 0.1);
-            --text-primary: #ffffff;
-            --text-secondary: rgba(255, 255, 255, 0.8);
-            --text-muted: rgba(255, 255, 255, 0.6);
+        }
+        
+        /* Auto theme based on OS preference */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary: #0f1419;
+                --bg-secondary: #1a2332;
+                --card-bg: rgba(255, 255, 255, 0.05);
+                --border-color: rgba(255, 255, 255, 0.1);
+                --text-primary: #ffffff;
+                --text-secondary: rgba(255, 255, 255, 0.8);
+                --text-muted: rgba(255, 255, 255, 0.6);
+                --input-bg: rgba(255, 255, 255, 0.05);
+                --hover-bg: rgba(255, 255, 255, 0.02);
+            }
+        }
+        
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg-primary: #f8fafc;
+                --bg-secondary: #ffffff;
+                --card-bg: #ffffff;
+                --border-color: #e2e8f0;
+                --text-primary: #1a202c;
+                --text-secondary: #4a5568;
+                --text-muted: #718096;
+                --input-bg: #ffffff;
+                --hover-bg: #f7fafc;
+            }
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            background: linear-gradient(135deg, var(--dark-bg) 0%, #1a2332 50%, #2d3748 100%);
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-primary) 100%);
             color: var(--text-primary);
             min-height: 100vh;
+            transition: background 0.3s ease, color 0.3s ease;
         }
         .header {
             background: var(--card-bg);
@@ -2518,6 +2542,7 @@ Future<void> _handleAdminPage(HttpRequest request) async {
             position: sticky;
             top: 0;
             z-index: 100;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         .header-content {
             display: flex;
@@ -2714,10 +2739,40 @@ Future<void> _handleAdminPage(HttpRequest request) async {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            display: inline-block;
+        }
+        
+        .badge-free {
+            background: rgba(156, 163, 175, 0.2);
+            color: #9ca3af;
+            border: 1px solid rgba(156, 163, 175, 0.3);
+        }
+        
+        .badge-premium {
+            background: rgba(102, 126, 234, 0.2);
+            color: var(--primary-color);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+        }
+        
+        .badge-pro {
+            background: rgba(118, 75, 162, 0.2);
+            color: var(--secondary-color);
+            border: 1px solid rgba(118, 75, 162, 0.3);
+        }
+        
         @media (max-width: 768px) {
             .container { padding: 1rem; }
             .stats-grid { grid-template-columns: 1fr; }
             .search-container { flex-direction: column; }
+            .header-content { flex-direction: column; gap: 1rem; }
+            .nav-links { gap: 1rem; }
         }
     </style>
 </head>
@@ -2754,17 +2809,17 @@ Future<void> _handleAdminPage(HttpRequest request) async {
         <div class="content-section">
             <div class="section-header">
                 <h2 class="section-title">👥 Usuários do Sistema</h2>
-                <button class="btn btn-primary" onclick="createUser()">➕ Novo Usuário</button>
+                <button class="btn btn-primary" onclick="createUser()" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: white; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);">➕ Novo Usuário</button>
             </div>
             <div class="search-container">
-                <input type="text" class="search-input" id="userSearch" placeholder="Buscar usuários por email...">
-                <select class="filter-select" id="planFilter">
+                <input type="text" class="search-input" id="userSearch" placeholder="🔍 Buscar usuários por email..." style="color: var(--text-primary); background: var(--input-bg);">
+                <select class="filter-select" id="planFilter" style="color: var(--text-primary); background: var(--input-bg);">
                     <option value="">Todos os Planos</option>
                     <option value="free">Free</option>
                     <option value="premium">Premium</option>
                     <option value="pro">Pro</option>
                 </select>
-                <button class="btn btn-secondary" onclick="loadUsers()">🔄 Atualizar</button>
+                <button class="btn btn-secondary" onclick="loadUsers()" style="background: var(--card-bg); color: var(--text-secondary); border: 1px solid var(--border-color);">🔄 Atualizar</button>
             </div>
             <table class="data-table" id="usersTable">
                 <thead>
@@ -2790,12 +2845,76 @@ Future<void> _handleAdminPage(HttpRequest request) async {
             </table>
         </div>
     </div>
+    <!-- Modern Modal for Create/Edit User -->
+    <div id="userModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: var(--card-bg); backdrop-filter: blur(20px); border: 1px solid var(--border-color); border-radius: 16px; padding: 2rem; max-width: 500px; width: 90%; box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
+                <h2 id="modalTitle" style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary);">Novo Usuário</h2>
+                <button onclick="closeModal()" style="background: none; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer;">✕</button>
+            </div>
+            <div id="modalAlert" style="margin-bottom: 1rem;"></div>
+            <form id="userForm">
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary);">Email</label>
+                    <input type="email" id="userEmail" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-primary); font-size: 1rem;">
+                </div>
+                <div id="passwordGroup" style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary);">Senha</label>
+                    <input type="password" id="userPassword" minlength="6" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-primary); font-size: 1rem;">
+                </div>
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary);">Plano</label>
+                    <select id="userPlan" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-primary); font-size: 1rem;">
+                        <option value="free">Free - 5 consultas/dia</option>
+                        <option value="premium">Premium - 100 consultas/dia (R$ 19,90/mês)</option>
+                        <option value="pro">Pro - 500 consultas/dia (R$ 39,90/mês)</option>
+                    </select>
+                </div>
+                <div id="usageGroup" style="margin-bottom: 1.5rem; display: none;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary);">Consultas Usadas Hoje</label>
+                    <input type="number" id="userUsage" min="0" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-primary); font-size: 1rem;">
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+                    <button type="button" onclick="closeModal()" style="padding: 0.75rem 1.5rem; border: 1px solid var(--border-color); border-radius: 8px; background: var(--card-bg); color: var(--text-secondary); font-weight: 600; cursor: pointer;">Cancelar</button>
+                    <button type="submit" id="saveBtn" style="padding: 0.75rem 1.5rem; border: none; border-radius: 8px; background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: white; font-weight: 600; cursor: pointer;">
+                        <span id="saveText">Salvar</span>
+                        <span id="saveLoading" style="display: none;">⏳ Salvando...</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast" style="position: fixed; top: 20px; right: 20px; background: var(--success-color); color: white; padding: 1rem 1.5rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); transform: translateX(400px); transition: transform 0.3s ease; z-index: 2000;">
+        <span id="toastMessage">Mensagem</span>
+    </div>
+
     <script>
         let users = [];
+        let allUsers = []; // Keep original list for filtering
+        let editingUser = null;
+
         document.addEventListener('DOMContentLoaded', function() {
             loadStats();
             loadUsers();
+            setupEventListeners();
         });
+
+        function setupEventListeners() {
+            // Search functionality
+            document.getElementById('userSearch').addEventListener('input', filterUsers);
+            document.getElementById('planFilter').addEventListener('change', filterUsers);
+            
+            // Form submission
+            document.getElementById('userForm').addEventListener('submit', saveUser);
+            
+            // Modal background click to close
+            document.getElementById('userModal').addEventListener('click', (e) => {
+                if (e.target.id === 'userModal') closeModal();
+            });
+        }
+
         async function loadStats() {
             try {
                 const response = await fetch('/admin/stats');
@@ -2806,97 +2925,195 @@ Future<void> _handleAdminPage(HttpRequest request) async {
                 document.getElementById('revenue').textContent = 'R$ ' + (stats.revenue || '0.00');
             } catch (error) {
                 console.error('Erro ao carregar stats:', error);
+                showToast('Erro ao carregar estatísticas', 'error');
             }
         }
+
         async function loadUsers() {
             try {
                 const response = await fetch('/admin/users');
                 const data = await response.json();
-                users = data.users || [];
+                allUsers = data.users || [];
+                users = [...allUsers]; // Copy for filtering
                 updateUsersTable();
             } catch (error) {
                 console.error('Erro ao carregar usuários:', error);
                 document.getElementById('usersTableBody').innerHTML = `
-                    <tr><td colspan="6" style="text-align: center; padding: 2rem; color: #fc8181;">
+                    <tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--danger-color);">
                         ❌ Erro ao carregar usuários: ${error.message}
                     </td></tr>`;
+                showToast('Erro ao carregar usuários', 'error');
             }
         }
+
         function updateUsersTable() {
             const tbody = document.getElementById('usersTableBody');
             if (users.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 2rem;">
-                    Nenhum usuário cadastrado ainda. Crie o primeiro usuário!
+                    ${allUsers.length === 0 ? 'Nenhum usuário cadastrado ainda. Crie o primeiro usuário!' : 'Nenhum usuário encontrado para os filtros aplicados.'}
                 </td></tr>`;
                 return;
             }
             tbody.innerHTML = users.map(user => `
-                <tr>
-                    <td>#${user.id}</td>
+                <tr style="transition: background 0.2s ease;" onmouseover="this.style.background='var(--hover-bg)'" onmouseout="this.style.background='transparent'">
+                    <td style="font-weight: 600;">#${user.id}</td>
                     <td>${user.email}</td>
                     <td><span class="badge badge-${user.subscriptionTier}">${user.subscriptionTier.toUpperCase()}</span></td>
                     <td>${user.dailyUsageCount}/${user.dailyLimit || 5}</td>
                     <td>${new Date(user.createdAt).toLocaleDateString('pt-BR')}</td>
                     <td>
-                        <button class="btn btn-secondary" onclick="editUser(${user.id})" style="margin-right: 0.5rem;">✏️ Editar</button>
-                        <button class="btn btn-danger" onclick="deleteUser(${user.id})" style="background: #f56565; color: white;">🗑️ Excluir</button>
+                        <button onclick="editUser(${user.id})" style="padding: 0.5rem 0.75rem; margin-right: 0.5rem; border: none; border-radius: 6px; background: var(--warning-color); color: white; font-size: 0.85rem; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">✏️ Editar</button>
+                        <button onclick="deleteUser(${user.id})" style="padding: 0.5rem 0.75rem; border: none; border-radius: 6px; background: var(--danger-color); color: white; font-size: 0.85rem; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">🗑️ Excluir</button>
                     </td>
                 </tr>
             `).join('');
         }
-        function createUser() {
-            const email = prompt('Email do novo usuário:');
-            if (!email) return;
-            const password = prompt('Senha (mínimo 6 caracteres):');
-            if (!password || password.length < 6) {
-                alert('Senha deve ter pelo menos 6 caracteres');
-                return;
-            }
-            const plan = prompt('Plano (free/premium/pro):', 'free');
-            if (!['free', 'premium', 'pro'].includes(plan)) {
-                alert('Plano deve ser: free, premium ou pro');
-                return;
-            }
-            createUserAPI(email, password, plan);
+
+        function filterUsers() {
+            const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+            const planFilter = document.getElementById('planFilter').value;
+
+            users = allUsers.filter(user => {
+                const matchesSearch = user.email.toLowerCase().includes(searchTerm);
+                const matchesPlan = !planFilter || user.subscriptionTier === planFilter;
+                return matchesSearch && matchesPlan;
+            });
+
+            updateUsersTable();
         }
-        async function createUserAPI(email, password, plan) {
+
+        function createUser() {
+            editingUser = null;
+            document.getElementById('modalTitle').textContent = 'Novo Usuário';
+            document.getElementById('passwordGroup').style.display = 'block';
+            document.getElementById('usageGroup').style.display = 'none';
+            document.getElementById('userForm').reset();
+            document.getElementById('userPassword').required = true;
+            showModal();
+        }
+
+        function editUser(userId) {
+            const user = allUsers.find(u => u.id === userId);
+            if (!user) {
+                showToast('Usuário não encontrado', 'error');
+                return;
+            }
+
+            editingUser = user;
+            document.getElementById('modalTitle').textContent = 'Editar Usuário';
+            document.getElementById('passwordGroup').style.display = 'none';
+            document.getElementById('usageGroup').style.display = 'block';
+            document.getElementById('userPassword').required = false;
+            
+            document.getElementById('userEmail').value = user.email;
+            document.getElementById('userPlan').value = user.subscriptionTier;
+            document.getElementById('userUsage').value = user.dailyUsageCount || 0;
+            
+            showModal();
+        }
+
+        function showModal() {
+            document.getElementById('userModal').style.display = 'flex';
+            document.getElementById('modalAlert').innerHTML = '';
+        }
+
+        function closeModal() {
+            document.getElementById('userModal').style.display = 'none';
+            editingUser = null;
+        }
+
+        async function saveUser(event) {
+            event.preventDefault();
+            
+            const saveBtn = document.getElementById('saveBtn');
+            const saveText = document.getElementById('saveText');
+            const saveLoading = document.getElementById('saveLoading');
+            
+            saveText.style.display = 'none';
+            saveLoading.style.display = 'inline';
+            saveBtn.disabled = true;
+
             try {
-                const response = await fetch('/admin/users', {
-                    method: 'POST',
+                const formData = {
+                    email: document.getElementById('userEmail').value,
+                    subscriptionTier: document.getElementById('userPlan').value,
+                };
+
+                if (editingUser) {
+                    formData.dailyUsageCount = parseInt(document.getElementById('userUsage').value) || 0;
+                } else {
+                    formData.password = document.getElementById('userPassword').value;
+                }
+
+                const url = editingUser ? `/admin/users/${editingUser.id}` : '/admin/users';
+                const method = editingUser ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method,
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email: email,
-                        password: password,
-                        subscriptionTier: plan
-                    })
+                    body: JSON.stringify(formData)
                 });
+
                 const result = await response.json();
                 if (result.success) {
-                    alert('✅ Usuário criado com sucesso!');
+                    showToast(editingUser ? 'Usuário atualizado com sucesso!' : 'Usuário criado com sucesso!', 'success');
+                    closeModal();
                     loadUsers();
                     loadStats();
                 } else {
-                    alert('❌ Erro: ' + result.error);
+                    showModalAlert(result.error || 'Erro desconhecido', 'error');
                 }
             } catch (error) {
-                alert('❌ Erro ao criar usuário: ' + error.message);
+                showModalAlert('Erro de conexão: ' + error.message, 'error');
+            } finally {
+                saveText.style.display = 'inline';
+                saveLoading.style.display = 'none';
+                saveBtn.disabled = false;
             }
         }
+
         async function deleteUser(userId) {
-            if (!confirm('Tem certeza que deseja excluir este usuário?')) return;
+            const user = allUsers.find(u => u.id === userId);
+            if (!user) return;
+
+            if (!confirm(`Tem certeza que deseja excluir o usuário "${user.email}"?\n\nEsta ação não pode ser desfeita.`)) return;
+
             try {
                 const response = await fetch(`/admin/users/${userId}`, { method: 'DELETE' });
                 const result = await response.json();
                 if (result.success) {
-                    alert('✅ Usuário excluído com sucesso!');
+                    showToast('Usuário excluído com sucesso!', 'success');
                     loadUsers();
                     loadStats();
                 } else {
-                    alert('❌ Erro: ' + result.error);
+                    showToast('Erro ao excluir usuário: ' + result.error, 'error');
                 }
             } catch (error) {
-                alert('❌ Erro ao excluir usuário: ' + error.message);
+                showToast('Erro de conexão: ' + error.message, 'error');
             }
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            toast.style.background = type === 'error' ? 'var(--danger-color)' : 'var(--success-color)';
+            toastMessage.textContent = message;
+            toast.style.transform = 'translateX(0)';
+            
+            setTimeout(() => {
+                toast.style.transform = 'translateX(400px)';
+            }, 3000);
+        }
+
+        function showModalAlert(message, type) {
+            const alertEl = document.getElementById('modalAlert');
+            const color = type === 'error' ? 'var(--danger-color)' : 'var(--success-color)';
+            alertEl.innerHTML = `
+                <div style="padding: 1rem; border-radius: 8px; background: ${color}20; border: 1px solid ${color}40; color: ${color}; margin-bottom: 1rem;">
+                    ${message}
+                </div>
+            `;
         }
     </script>
 </body>
