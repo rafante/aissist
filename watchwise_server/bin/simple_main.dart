@@ -279,163 +279,311 @@ Future<void> _handleLandingPage(HttpRequest request) async {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIssist - Seu Assistente de Entretenimento</title>
+    <title>AIssist - Seu Assistente de Entretenimento Inteligente</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            background: linear-gradient(135deg, #0f1419 0%, #1a2332 50%, #2d3748 100%);
-            color: white;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-        .hero {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            color: white;
+            overflow-x: hidden;
+        }
+        .container {
             text-align: center;
+            max-width: 1000px;
             padding: 2rem;
-            position: relative;
-        }
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="20" cy="20" r="1" fill="%23ffffff" opacity="0.05"/><circle cx="80" cy="40" r="0.5" fill="%23ffffff" opacity="0.1"/><circle cx="40" cy="80" r="1.5" fill="%23ffffff" opacity="0.05"/><circle cx="90" cy="10" r="0.5" fill="%23ffffff" opacity="0.1"/><circle cx="10" cy="90" r="1" fill="%23ffffff" opacity="0.05"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-            pointer-events: none;
-        }
-        .hero-content {
-            max-width: 800px;
-            z-index: 1;
-            position: relative;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
         .logo {
             font-size: 4rem;
             font-weight: 900;
             margin-bottom: 1rem;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         }
-        .tagline {
-            font-size: 1.5rem;
-            margin-bottom: 2rem;
+        .subtitle {
+            font-size: 1.3rem;
+            margin-bottom: 3rem;
             opacity: 0.9;
             line-height: 1.6;
         }
-        .cta-buttons {
+        .demo-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2.5rem;
+            border-radius: 20px;
+            margin-bottom: 3rem;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .demo-title {
+            font-size: 1.8rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+        .search-container {
             display: flex;
             gap: 1rem;
-            justify-content: center;
-            margin-bottom: 3rem;
-            flex-wrap: wrap;
+            margin-bottom: 2rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
         }
-        .btn {
+        .search-input {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            font-size: 1rem;
+            backdrop-filter: blur(10px);
+        }
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .search-input:focus {
+            outline: none;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+        .test-btn {
             padding: 1rem 2rem;
             border: none;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
-        }
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        .btn-secondary:hover {
+            border-radius: 50px;
             background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
         }
-        .features {
+        .test-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        .test-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .ai-response {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-top: 2rem;
+            text-align: left;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .loading {
+            display: none;
+            margin: 2rem 0;
+        }
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .features-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 2rem;
             margin-top: 3rem;
         }
         .feature {
-            text-align: center;
-            padding: 1.5rem;
             background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 15px;
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .feature-icon {
-            font-size: 3rem;
+            font-size: 2.5rem;
             margin-bottom: 1rem;
         }
         .feature h3 {
             margin-bottom: 1rem;
-            font-size: 1.3rem;
+            font-size: 1.2rem;
         }
         .feature p {
             opacity: 0.8;
-            line-height: 1.6;
+            line-height: 1.5;
         }
+        .auth-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+        .auth-btn {
+            padding: 0.8rem 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        .auth-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        .hidden { display: none; }
         @media (max-width: 768px) {
+            .container { margin: 1rem; padding: 1.5rem; }
             .logo { font-size: 2.5rem; }
-            .tagline { font-size: 1.2rem; }
-            .cta-buttons { flex-direction: column; align-items: center; }
-            .btn { width: 100%; max-width: 300px; justify-content: center; }
+            .subtitle { font-size: 1.1rem; }
+            .search-container { flex-direction: column; }
+            .auth-buttons { flex-direction: column; align-items: center; }
         }
     </style>
 </head>
 <body>
-    <div class="hero">
-        <div class="hero-content">
-            <h1 class="logo">AIssist</h1>
-            <p class="tagline">
-                Seu assistente inteligente para descobrir filmes, séries e entretenimento personalizado. 
-                Alimentado por IA avançada.
-            </p>
+    <div class="container">
+        <h1 class="logo">🎬 AIssist</h1>
+        <p class="subtitle">
+            Descubra filmes e séries perfeitos para você com inteligência artificial avançada.
+            Recomendações personalizadas, busca inteligente e muito mais!
+        </p>
+
+        <div class="demo-section">
+            <h2 class="demo-title">🤖 Teste a IA Agora</h2>
             
-            <div class="cta-buttons">
-                <a href="/signup" class="btn btn-primary">
-                    🚀 Começar Grátis
-                </a>
-                <a href="/login" class="btn btn-secondary">
-                    🔑 Fazer Login
-                </a>
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    class="search-input" 
+                    id="userQuery"
+                    placeholder="Ex: 'Quero um filme de suspense para assistir hoje à noite'"
+                    maxlength="200"
+                >
+                <button class="test-btn" id="testBtn" onclick="testAI()">
+                    ✨ Testar IA
+                </button>
             </div>
-            
-            <div class="features">
-                <div class="feature">
-                    <div class="feature-icon">🤖</div>
-                    <h3>IA Personalizada</h3>
-                    <p>Recomendações inteligentes baseadas no seu gosto e histórico</p>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon">🎬</div>
-                    <h3>Catálogo Gigante</h3>
-                    <p>Milhões de filmes e séries com informações detalhadas</p>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon">⚡</div>
-                    <h3>Busca Instantânea</h3>
-                    <p>Encontre o que procura em segundos com busca inteligente</p>
-                </div>
+
+            <div class="loading hidden" id="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 1rem;">🧠 IA pensando...</p>
+            </div>
+
+            <div class="ai-response hidden" id="aiResponse">
+                <h4>🎯 Recomendação da IA:</h4>
+                <div id="responseContent"></div>
             </div>
         </div>
+
+        <div class="features-grid">
+            <div class="feature">
+                <div class="feature-icon">🎯</div>
+                <h3>Recomendações Precisas</h3>
+                <p>IA treinada com milhares de filmes e séries para sugestões perfeitas</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">⚡</div>
+                <h3>Respostas Instantâneas</h3>
+                <p>Resultados em segundos, com explicações detalhadas e personalizadas</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🎬</div>
+                <h3>Catálogo Gigante</h3>
+                <p>Acesso a milhões de títulos com informações completas e atualizadas</p>
+            </div>
+        </div>
+
+        <div class="auth-buttons">
+            <a href="/signup" class="auth-btn">📝 Criar Conta Grátis</a>
+            <a href="/login" class="auth-btn">🔑 Fazer Login</a>
+            <a href="/admin" class="auth-btn">⚙️ Admin</a>
+        </div>
     </div>
+
+    <script>
+        document.getElementById('userQuery').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                testAI();
+            }
+        });
+
+        async function testAI() {
+            const query = document.getElementById('userQuery').value.trim();
+            if (!query) {
+                alert('Digite uma pergunta sobre filmes ou séries!');
+                return;
+            }
+
+            const testBtn = document.getElementById('testBtn');
+            const loading = document.getElementById('loading');
+            const aiResponse = document.getElementById('aiResponse');
+            const responseContent = document.getElementById('responseContent');
+
+            // Show loading
+            testBtn.disabled = true;
+            testBtn.textContent = '⏳ Processando...';
+            loading.classList.remove('hidden');
+            aiResponse.classList.add('hidden');
+
+            try {
+                const response = await fetch('/ai/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    responseContent.innerHTML = `
+                        <p><strong>Sua pergunta:</strong> ${query}</p>
+                        <br>
+                        <p><strong>Resposta da IA:</strong></p>
+                        <p>${data.ai_response}</p>
+                        ${data.movie_suggestions && data.movie_suggestions.length > 0 ? `
+                        <br>
+                        <p><strong>🎬 Sugestões encontradas:</strong></p>
+                        <ul>
+                            ${data.movie_suggestions.slice(0, 3).map(movie => `
+                                <li><strong>${movie.title || movie.name}</strong> ${movie.release_date ? '(' + movie.release_date.split('-')[0] + ')' : ''}</li>
+                            `).join('')}
+                        </ul>
+                        ` : ''}
+                    `;
+                    aiResponse.classList.remove('hidden');
+                } else {
+                    alert('Erro: ' + (data.error || 'Falha na comunicação com a IA'));
+                }
+            } catch (error) {
+                alert('Erro de conexão: ' + error.message);
+                console.error('Erro:', error);
+            } finally {
+                testBtn.disabled = false;
+                testBtn.textContent = '✨ Testar IA';
+                loading.classList.add('hidden');
+            }
+        }
+    </script>
 </body>
 </html>
   ''';
