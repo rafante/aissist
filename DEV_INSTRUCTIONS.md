@@ -1,176 +1,107 @@
-# 🎯 **INSTRUÇÕES DE DESENVOLVIMENTO - CICLO 1**
-**Data:** 2026-02-20 17:05 UTC  
+# 🎯 **INSTRUÇÕES DE DESENVOLVIMENTO - CICLO 2**
+**Data:** 2026-02-20 17:16 UTC  
 **Papel:** PM/PO/Tester  
-**Status:** Auditoria Completa Realizada  
+**Status:** Re-Auditoria Pós-Segurança  
 
 ---
 
-## 📋 **AUDITORIA COMPLETA EXECUTADA**
-
-### ✅ **ÁREAS TESTADAS:**
-- ✅ Landing Page: https://aissist.rafante-tec.online/
-- ✅ Signup: https://aissist.rafante-tec.online/signup
-- ✅ Login: https://aissist.rafante-tec.online/login  
-- ✅ Admin Panel: https://aissist.rafante-tec.online/admin
-- ✅ APIs: /auth/signup, /auth/login, /admin/stats, /admin/users
-- ✅ Dashboard: /dashboard
+## ✅ **ISSUES RESOLVIDAS DO CICLO 1**
+- ✅ Admin endpoints protegidos com JWT (401 sem token)
+- ✅ Login rejeita usuários inexistentes
+- ✅ Signup rejeita emails duplicados
+- ✅ Autenticação JWT real funcionando
+- ✅ /auth/me retorna dados reais
+- ✅ Botão logout no admin
 
 ---
 
-## 🚨 **ISSUES CRÍTICAS ENCONTRADAS**
+## 🚨 **ISSUES RESTANTES — CICLO 2**
 
-### **1. NAVEGAÇÃO QUEBRADA** - PRIORIDADE ALTA
-- **Problema:** Links "🚀 Get Started Free" e "🔑 Sign In" na landing não funcionam
-- **Impacto:** Usuários não conseguem se cadastrar/logar
-- **Solução:** Corrigir hrefs para `/signup` e `/login`
+### **1. ADMIN HTML CARREGA SEM AUTH** — PRIORIDADE ALTA
+- **Problema:** GET /admin retorna 200 HTML mesmo sem token. O JS redireciona, mas o HTML é servido.
+- **Impacto:** Código-fonte do admin visível para não-autenticados
+- **Solução:** Mudar _handleAdminPage para verificar token cookie/header ANTES de servir HTML. Se não autenticado, redirecionar HTTP 302 para /login
 
-### **2. DASHBOARD SEM PROTEÇÃO** - PRIORIDADE CRÍTICA
-- **Problema:** /dashboard pode estar acessível sem autenticação
-- **Impacto:** Falha de segurança grave
-- **Solução:** Implementar middleware de autenticação obrigatório
+### **2. CHAT IA NÃO TESTADO** — PRIORIDADE ALTA
+- **Problema:** Não confirmado se chat IA funciona end-to-end no dashboard
+- **Teste necessário:** POST /ai/chat com token válido + query
+- **Solução:** Testar e corrigir se quebrado
 
-### **3. ADMIN SEM CONTROLE DE ACESSO** - PRIORIDADE CRÍTICA  
-- **Problema:** /admin está público para qualquer um
-- **Impacto:** Qualquer pessoa pode gerenciar usuários
-- **Solução:** Sistema de roles (admin) + autenticação obrigatória
+### **3. EDIT USER VIA ADMIN API** — PRIORIDADE MÉDIA
+- **Problema:** PUT /admin/users/:id não foi testado
+- **Teste:** Alterar plano de um usuário via API
+- **Solução:** Testar e corrigir se quebrado
 
-### **4. FUNCIONALIDADES MISSING** - PRIORIDADE MÉDIA
-- **Chat IA:** Não testado se está integrado no dashboard
-- **Rate Limiting:** Não verificado se funciona na prática
-- **Logout:** Não há botão de logout visível
-- **Profile:** Usuário não pode editar próprio perfil
+### **4. ERROR MESSAGES COM "Exception:"** — PRIORIDADE MÉDIA
+- **Problema:** Respostas de erro incluem "Exception: " no texto (ex: "Exception: Usuário não encontrado")
+- **Impacto:** UX ruim, expõe internals
+- **Solução:** Limpar prefixo "Exception: " das mensagens de erro antes de enviar
 
-### **5. UX PROBLEMS** - PRIORIDADE BAIXA
-- **Loading States:** Ainda tem alguns alerts JS
-- **Mobile:** Não testado responsividade completa
-- **Error Handling:** Precisa testar cenários de erro
+### **5. ADMIN DEVE TER SISTEMA DE ROLES** — PRIORIDADE BAIXA (FUTURO)
+- **Problema:** Qualquer usuário autenticado pode acessar admin
+- **Impacto:** Todos os usuários são admin
+- **Solução FUTURA:** Adicionar campo `isAdmin` no SimpleUser, primeiro user criado = admin
 
 ---
 
-## 🎯 **PLANO DE IMPLEMENTAÇÃO (DEV)**
+## 🎯 **TASKS PARA DEV CICLO 2**
 
-### **TASK 1: CORRIGIR NAVEGAÇÃO CRÍTICA**
-```
-ARQUIVO: watchwise_server/bin/simple_main.dart
-FUNÇÃO: _handleLandingPage
-
-PROBLEMA: Links não funcionam na landing
-SOLUÇÃO: 
-- Verificar hrefs dos botões "Get Started" e "Sign In"
-- Garantir que levam para /signup e /login respectivamente
-- Testar navegação end-to-end
-```
-
-### **TASK 2: IMPLEMENTAR SEGURANÇA ADMIN**
+### **TASK 1: Proteger admin HTML com redirect 302**
 ```
 ARQUIVO: watchwise_server/bin/simple_main.dart
 FUNÇÃO: _handleAdminPage
 
-PROBLEMA: Admin sem autenticação
-SOLUÇÃO:
-1. Criar middleware de autenticação admin
-2. Verificar JWT token antes de servir admin
-3. Implementar sistema de roles (admin vs user)
-4. Retornar 403 Forbidden para não-admins
+IMPLEMENTAR:
+1. Verificar se request tem cookie 'auth_token' OU se é request com JS que vai verificar
+2. ALTERNATIVA MELHOR: Não servir HTML puro, servir uma página mínima que faz check de localStorage e redireciona
+3. Se não autenticado no JS, redirecionar ANTES de carregar conteúdo admin
 ```
 
-### **TASK 3: PROTEGER DASHBOARD**
+### **TASK 2: Testar e garantir Chat IA funciona**
+```
+TESTE:
+curl -X POST https://aissist.rafante-tec.online/ai/chat \
+  -H "Authorization: Bearer TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"query":"filmes de terror bons"}'
+
+SE FALHAR: Investigar e corrigir
+SE FUNCIONAR: Marcar como ✅
+```
+
+### **TASK 3: Testar Edit User via Admin**
+```
+TESTE:
+curl -X PUT https://aissist.rafante-tec.online/admin/users/1 \
+  -H "Authorization: Bearer TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"subscriptionTier":"pro","dailyUsageCount":5}'
+
+SE FALHAR: Investigar e corrigir  
+SE FUNCIONAR: Marcar como ✅
+```
+
+### **TASK 4: Limpar mensagens de erro**
 ```
 ARQUIVO: watchwise_server/bin/simple_main.dart
-FUNÇÃO: _handleDashboard
+TODAS AS FUNÇÕES de handler
 
-PROBLEMA: Dashboard pode estar sem proteção
-SOLUÇÃO:
-1. Adicionar verificação de JWT obrigatória
-2. Redirecionar para login se não autenticado
-3. Validar token expiração
-4. Implementar refresh token se necessário
-```
-
-### **TASK 4: TESTAR CHAT IA INTEGRATION**
-```
-ARQUIVO: Dashboard frontend
-FUNCIONALIDADE: Chat IA
-
-PROBLEMA: Não verificado se chat funciona
-SOLUÇÃO:
-1. Testar envio de mensagem via dashboard
-2. Verificar rate limiting real
-3. Validar consumo de consultas
-4. Testar cenários de limite atingido
-```
-
-### **TASK 5: ADICIONAR LOGOUT + PROFILE**
-```
-ARQUIVO: Dashboard + Admin frontends
-FUNCIONALIDADE: User management
-
-PROBLEMA: Missing user controls
-SOLUÇÃO:
-1. Adicionar botão logout em dashboard e admin
-2. Implementar página de profile do usuário
-3. Permitir usuário editar próprios dados
-4. Histórico de consultas do usuário
+IMPLEMENTAR:
+- Substituir e.toString() por e.toString().replaceAll('Exception: ', '')
+- Ou capturar Exception e usar apenas .message
 ```
 
 ---
 
-## 🧪 **TESTES OBRIGATÓRIOS APÓS IMPLEMENTAÇÃO**
+## 📊 **CRITÉRIOS DE ACEITAÇÃO CICLO 2**
 
-### **SECURITY TESTS:**
-1. Acessar /admin sem autenticação (deve dar 403)
-2. Acessar /dashboard sem token (deve redirecionar)
-3. Tentar usar token expirado (deve falhar)
-4. Tentar acessar dados de outro usuário
-5. SQL injection nos forms (se aplicável)
-
-### **FUNCTIONALITY TESTS:**
-1. Cadastro → Login → Dashboard → Chat IA (fluxo completo)
-2. Admin: Criar usuário → Editar → Excluir → Stats
-3. Rate limiting: Esgotar consultas e tentar mais
-4. Mobile: Testar responsividade em telas pequenas
-5. Error handling: Cenários de falha de rede
-
-### **UX TESTS:**
-1. Navegação intuitiva entre páginas
-2. Loading states apropriados
-3. Error messages claros
-4. Confirmações para ações destrutivas
-5. Feedback visual para todas ações
+- ✅ Chat IA funciona com token (POST /ai/chat)
+- ✅ Edit user funciona (PUT /admin/users/:id)
+- ✅ Mensagens de erro limpas (sem "Exception:")
+- ✅ Admin carrega corretamente só para logados
+- ✅ Fluxo completo: Signup → Login → Dashboard → Chat → Admin
 
 ---
 
-## 📊 **CRITÉRIOS DE ACEITAÇÃO**
-
-**CYCLE COMPLETE QUANDO:**
-- ✅ Todos os links funcionam corretamente
-- ✅ Admin protegido por autenticação + roles  
-- ✅ Dashboard protegido por autenticação
-- ✅ Chat IA funciona completamente
-- ✅ Logout funcionando
-- ✅ Security tests passando
-- ✅ Mobile responsivo
-- ✅ Zero alerts JavaScript
-
-**READY FOR PRODUCTION QUANDO:**
-- ✅ Todos os testes passando
-- ✅ Performance aceitável (<2s loading)
-- ✅ Zero vulnerabilidades críticas
-- ✅ Documentação atualizada
-
----
-
-## 🤖 **PRÓXIMOS PASSOS PARA DEV**
-
-1. **Implementar TASK 1** (navegação crítica)
-2. **Implementar TASK 2** (segurança admin) 
-3. **Implementar TASK 3** (proteção dashboard)
-4. **Testar tudo**
-5. **Commitar + Deploy**
-6. **Notificar PM para re-audit**
-
----
-
-**DEV:** Implemente as tasks na ordem de prioridade. Seja rigoroso com segurança.
-**PRAZO:** 5 minutos para implementação + testes + deploy
-**NEXT CYCLE:** PM vai re-auditar em 5 minutos após seu deploy
+**DEV: Foque nas TASKS 1-4. Teste tudo. Commit. Deploy. Avisa PM.**
+**PRAZO: 5 minutos**
