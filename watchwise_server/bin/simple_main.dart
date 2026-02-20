@@ -325,12 +325,19 @@ Future<void> _handleAIChat(HttpRequest request, TmdbService tmdb, RevivaLLMServi
       print('⚠️ Could not fetch movie context: $e');
     }
     
-    // Generate AI response
+    // Generate AI response with timeout to prevent server blocking
     final startTime = DateTime.now();
-    final aiResponse = await llmService.generateMovieRecommendation(
-      userQuery: userQuery,
-      movieContext: movieContext,
-    );
+    String aiResponse;
+    try {
+      aiResponse = await llmService.generateMovieRecommendation(
+        userQuery: userQuery,
+        movieContext: movieContext,
+      ).timeout(Duration(seconds: 30), onTimeout: () {
+        return 'Desculpe, o serviço de IA está demorando mais que o normal. Tente novamente em alguns segundos.';
+      });
+    } catch (e) {
+      aiResponse = 'Desculpe, o serviço de IA está temporariamente indisponível. Tente novamente em breve.';
+    }
     final endTime = DateTime.now();
     final processingTime = endTime.difference(startTime).inMilliseconds;
     
@@ -412,7 +419,7 @@ Future<void> _handleAIChat(HttpRequest request, TmdbService tmdb, RevivaLLMServi
       ..headers.add('Access-Control-Allow-Origin', '*')
       ..write(jsonEncode({
         'success': false,
-        'error': e.toString(),
+        'error': _cleanError(e),
       }));
     await request.response.close();
   }
@@ -1857,7 +1864,7 @@ Future<void> _handleSignupReal(HttpRequest request, Map<String, SimpleUser> user
       ..statusCode = 400
       ..headers.contentType = ContentType.json
       ..headers.add('Access-Control-Allow-Origin', '*')
-      ..write(jsonEncode({'success': false, 'error': e.toString()}));
+      ..write(jsonEncode({'success': false, 'error': _cleanError(e)}));
     await request.response.close();
   }
 }
@@ -1932,7 +1939,7 @@ Future<void> _handleLoginReal(HttpRequest request, Map<String, SimpleUser> users
       ..statusCode = 401
       ..headers.contentType = ContentType.json
       ..headers.add('Access-Control-Allow-Origin', '*')
-      ..write(jsonEncode({'success': false, 'error': e.toString()}));
+      ..write(jsonEncode({'success': false, 'error': _cleanError(e)}));
     await request.response.close();
   }
 }
@@ -1972,7 +1979,7 @@ Future<void> _handleMeReal(HttpRequest request, Map<String, SimpleUser> users) a
       ..statusCode = 401
       ..headers.contentType = ContentType.json
       ..headers.add('Access-Control-Allow-Origin', '*')
-      ..write(jsonEncode({'success': false, 'error': e.toString()}));
+      ..write(jsonEncode({'success': false, 'error': _cleanError(e)}));
     await request.response.close();
   }
 }
@@ -2024,7 +2031,7 @@ Future<void> _handleUsageReal(HttpRequest request, Map<String, SimpleUser> users
       ..statusCode = 401
       ..headers.contentType = ContentType.json
       ..headers.add('Access-Control-Allow-Origin', '*')
-      ..write(jsonEncode({'success': false, 'error': e.toString()}));
+      ..write(jsonEncode({'success': false, 'error': _cleanError(e)}));
     await request.response.close();
   }
 }
@@ -3312,6 +3319,11 @@ Future<void> _handleAdminPage(HttpRequest request, Map<String, SimpleUser> users
   }
 }
 
+// ERROR CLEANUP HELPER
+String _cleanError(dynamic e) {
+  return e.toString().replaceAll('Exception: ', '').replaceAll('FormatException: ', '');
+}
+
 // ADMIN AUTH HELPERS
 
 /// Check if request has valid admin authentication
@@ -3385,7 +3397,7 @@ Future<void> _handleAdminStats(HttpRequest request, Map<String, SimpleUser> user
       ..statusCode = 500
       ..headers.contentType = ContentType.json
       ..headers.add('Access-Control-Allow-Origin', '*')
-      ..write(jsonEncode({'error': e.toString()}));
+      ..write(jsonEncode({'error': _cleanError(e)}));
     await request.response.close();
   }
 }
@@ -3466,7 +3478,7 @@ Future<void> _handleAdminUsers(HttpRequest request, Map<String, SimpleUser> user
     request.response
       ..statusCode = 400
       ..headers.contentType = ContentType.json
-      ..write(jsonEncode({'error': e.toString()}));
+      ..write(jsonEncode({'error': _cleanError(e)}));
     await request.response.close();
   }
 }
@@ -3557,7 +3569,7 @@ Future<void> _handleAdminUserById(HttpRequest request, Map<String, SimpleUser> u
     request.response
       ..statusCode = 400
       ..headers.contentType = ContentType.json
-      ..write(jsonEncode({'error': e.toString()}));
+      ..write(jsonEncode({'error': _cleanError(e)}));
     await request.response.close();
   }
 }
@@ -3592,7 +3604,7 @@ Future<void> _handleAdminQueries(HttpRequest request, {List<Map<String, dynamic>
       ..statusCode = 500
       ..headers.contentType = ContentType.json
       ..headers.add('Access-Control-Allow-Origin', '*')
-      ..write(jsonEncode({'error': e.toString()}));
+      ..write(jsonEncode({'error': _cleanError(e)}));
     await request.response.close();
   }
 }
