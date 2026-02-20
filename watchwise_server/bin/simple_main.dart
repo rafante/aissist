@@ -2,8 +2,8 @@ import 'dart:io';
 import 'dart:convert';
 import '../lib/src/services/tmdb_service.dart';
 import '../lib/src/services/reviva_llm_service.dart';
-import '../lib/src/services/auth_service.dart';
-import '../lib/src/protocol/user.dart';
+import '../lib/src/services/simple_auth_service.dart';
+import '../lib/src/models/simple_user.dart';
 
 /// Ultra-simple HTTP server for AIssist MVP with REAL authentication
 Future<void> main() async {
@@ -17,7 +17,7 @@ Future<void> main() async {
   final llmService = RevivaLLMService();
   
   // In-memory user storage (TODO: Connect to real DB in production)
-  final Map<String, User> _users = {};
+  final Map<String, SimpleUser> _users = {};
   int _nextUserId = 1;
   
   // Create HTTP server  
@@ -243,7 +243,7 @@ Future<void> _handleSearchTV(HttpRequest request, TmdbService tmdb, Map<String, 
   await request.response.close();
 }
 
-Future<void> _handleAIChat(HttpRequest request, TmdbService tmdb, RevivaLLMService llmService, Map<String, String> query, Map<String, User> users) async {
+Future<void> _handleAIChat(HttpRequest request, TmdbService tmdb, RevivaLLMService llmService, Map<String, String> query, Map<String, SimpleUser> users) async {
   if (request.method != 'POST') {
     request.response
       ..statusCode = 405
@@ -262,7 +262,7 @@ Future<void> _handleAIChat(HttpRequest request, TmdbService tmdb, RevivaLLMServi
     }
 
     final token = authHeader.substring(7);
-    final userId = AuthService.verifyJwtToken(token);
+    final userId = SimpleAuthService.verifyJwtToken(token);
     
     if (userId == null) {
       throw Exception('Token inválido ou expirado');
@@ -1713,7 +1713,7 @@ Future<void> _handle404(HttpRequest request) async {
   await request.response.close();
 }
 
-Future<void> _handleSignupReal(HttpRequest request, Map<String, User> users, int userId) async {
+Future<void> _handleSignupReal(HttpRequest request, Map<String, SimpleUser> users, int userId) async {
   if (request.method != 'POST') {
     request.response
       ..statusCode = 405
@@ -1749,10 +1749,10 @@ Future<void> _handleSignupReal(HttpRequest request, Map<String, User> users, int
     }
 
     // Create new user
-    final user = User(
+    final user = SimpleUser(
       id: userId,
       email: email,
-      passwordHash: AuthService.hashPassword(password),
+      passwordHash: SimpleAuthService.hashPassword(password),
       subscriptionTier: planType,
       dailyUsageCount: 0,
       createdAt: DateTime.now(),
@@ -1763,7 +1763,7 @@ Future<void> _handleSignupReal(HttpRequest request, Map<String, User> users, int
     users[userId.toString()] = user;
 
     // Generate JWT token
-    final token = AuthService.generateJwtToken(user);
+    final token = SimpleAuthService.generateJwtToken(user);
 
     print('✅ NEW USER REGISTERED: $email (ID: $userId, Plan: $planType)');
 
@@ -1790,7 +1790,7 @@ Future<void> _handleSignupReal(HttpRequest request, Map<String, User> users, int
   }
 }
 
-Future<void> _handleLoginReal(HttpRequest request, Map<String, User> users) async {
+Future<void> _handleLoginReal(HttpRequest request, Map<String, SimpleUser> users) async {
   if (request.method != 'POST') {
     request.response
       ..statusCode = 405
@@ -1817,7 +1817,7 @@ Future<void> _handleLoginReal(HttpRequest request, Map<String, User> users) asyn
     }
 
     // Find user by email
-    User? user;
+    SimpleUser? user;
     for (final u in users.values) {
       if (u.email == email) {
         user = u;
@@ -1830,7 +1830,7 @@ Future<void> _handleLoginReal(HttpRequest request, Map<String, User> users) asyn
     }
 
     // Verify password
-    if (!AuthService.verifyPassword(password, user.passwordHash)) {
+    if (!SimpleAuthService.verifyPassword(password, user.passwordHash)) {
       throw Exception('Senha incorreta');
     }
 
@@ -1838,7 +1838,7 @@ Future<void> _handleLoginReal(HttpRequest request, Map<String, User> users) asyn
     user.updatedAt = DateTime.now();
 
     // Generate JWT token
-    final token = AuthService.generateJwtToken(user);
+    final token = SimpleAuthService.generateJwtToken(user);
 
     print('🔑 USER LOGGED IN: $email (ID: ${user.id})');
 
@@ -1865,7 +1865,7 @@ Future<void> _handleLoginReal(HttpRequest request, Map<String, User> users) asyn
   }
 }
 
-Future<void> _handleMeReal(HttpRequest request, Map<String, User> users) async {
+Future<void> _handleMeReal(HttpRequest request, Map<String, SimpleUser> users) async {
   try {
     final authHeader = request.headers.value('authorization');
     if (authHeader == null || !authHeader.startsWith('Bearer ')) {
@@ -1873,7 +1873,7 @@ Future<void> _handleMeReal(HttpRequest request, Map<String, User> users) async {
     }
 
     final token = authHeader.substring(7);
-    final userId = AuthService.verifyJwtToken(token);
+    final userId = SimpleAuthService.verifyJwtToken(token);
     
     if (userId == null) {
       throw Exception('Token inválido ou expirado');
@@ -1905,7 +1905,7 @@ Future<void> _handleMeReal(HttpRequest request, Map<String, User> users) async {
   }
 }
 
-Future<void> _handleUsageReal(HttpRequest request, Map<String, User> users) async {
+Future<void> _handleUsageReal(HttpRequest request, Map<String, SimpleUser> users) async {
   try {
     final authHeader = request.headers.value('authorization');
     if (authHeader == null || !authHeader.startsWith('Bearer ')) {
@@ -1913,7 +1913,7 @@ Future<void> _handleUsageReal(HttpRequest request, Map<String, User> users) asyn
     }
 
     final token = authHeader.substring(7);
-    final userId = AuthService.verifyJwtToken(token);
+    final userId = SimpleAuthService.verifyJwtToken(token);
     
     if (userId == null) {
       throw Exception('Token inválido ou expirado');
