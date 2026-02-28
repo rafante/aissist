@@ -3,6 +3,7 @@ import 'dart:convert';
 import '../lib/src/services/tmdb_service.dart';
 import '../lib/src/services/reviva_llm_service.dart';
 import '../lib/src/services/simple_auth_service.dart';
+import '../lib/src/services/database_service.dart';
 import '../lib/src/models/simple_user.dart';
 
 /// Ultra-simple HTTP server for AIssist MVP with REAL authentication
@@ -16,11 +17,34 @@ Future<void> main() async {
   // Initialize Reviva LLM service
   final llmService = RevivaLLMService();
   
-  // In-memory user storage (TODO: Connect to real DB in production)
+  // Initialize PostgreSQL database (from runtime environment variables)
+  final dbHost = Platform.environment['POSTGRES_HOST'] ?? 'localhost';
+  final dbPort = int.tryParse(Platform.environment['POSTGRES_PORT'] ?? '5432') ?? 5432;
+  final dbName = Platform.environment['POSTGRES_DB'] ?? 'postgres';
+  final dbUser = Platform.environment['POSTGRES_USER'] ?? 'postgres';
+  final dbPass = Platform.environment['POSTGRES_PASSWORD'] ?? 'password';
+  
+  final db = DatabaseService(
+    host: dbHost,
+    port: dbPort,
+    database: dbName,
+    username: dbUser,
+    password: dbPass,
+  );
+  
+  try {
+    await db.initialize();
+    print('✅ PostgreSQL connected and tables ready!');
+  } catch (e) {
+    print('⚠️ PostgreSQL connection failed: $e');
+    print('⚠️ Server will start but database operations will fail.');
+  }
+  
+  // Legacy in-memory fallback (kept for compatibility, DB is primary)
   final Map<String, SimpleUser> _users = {};
   int _nextUserId = 1;
   
-  // In-memory query log
+  // In-memory query log (legacy fallback)
   final List<Map<String, dynamic>> _queryLog = [];
   
   // Create HTTP server  
@@ -92,16 +116,16 @@ Future<void> main() async {
           await _handleAIChat(request, tmdb, llmService, query, _users, _queryLog);
           break;
         case '/auth/signup':
-          await _handleSignupReal(request, _users, _nextUserId++);
+          await _handleSignupReal(request, _users, _nextUserId++, db: db);
           break;
         case '/auth/login':
-          await _handleLoginReal(request, _users);
+          await _handleLoginReal(request, _users, db: db);
           break;
         case '/auth/me':
-          await _handleMeReal(request, _users);
+          await _handleMeReal(request, _users, db: db);
           break;
         case '/auth/usage':
-          await _handleUsageReal(request, _users);
+          await _handleUsageReal(request, _users, db: db);
           break;
         default:
           // Handle paths with parameters (like /admin/users/123)
@@ -1792,7 +1816,7 @@ Future<void> _handle404(HttpRequest request) async {
   await request.response.close();
 }
 
-Future<void> _handleSignupReal(HttpRequest request, Map<String, SimpleUser> users, int userId) async {
+Future<void> _handleSignupReal(HttpRequest request, Map<String, SimpleUser> users, int userId, {DatabaseService? db}) async {
   if (request.method != 'POST') {
     request.response
       ..statusCode = 405
@@ -1822,24 +1846,39 @@ Future<void> _handleSignupReal(HttpRequest request, Map<String, SimpleUser> user
       throw Exception('Email inválido');
     }
 
-    // Check if user already exists
-    if (users.values.any((u) => u.email == email)) {
-      throw Exception('Email já está em uso');
+    final passwordHash = SimpleAuthService.hashPassword(password);
+    SimpleUser? user;
+
+    // Try database first
+    if (db != null) {
+      // Check if user exists in DB
+      final existing = await db.findUserByEmail(email);
+      if (existing != null) {
+        throw Exception('Email já está em uso');
+      }
+      
+      user = await db.createUser(
+        email: email,
+        passwordHash: passwordHash,
+        subscriptionTier: planType,
+      );
+      if (user == null) throw Exception('Erro ao criar usuário no banco');
+    } else {
+      // Fallback to in-memory
+      if (users.values.any((u) => u.email == email)) {
+        throw Exception('Email já está em uso');
+      }
+      user = SimpleUser(
+        id: userId,
+        email: email,
+        passwordHash: passwordHash,
+        subscriptionTier: planType,
+        dailyUsageCount: 0,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+      users[userId.toString()] = user;
     }
-
-    // Create new user
-    final user = SimpleUser(
-      id: userId,
-      email: email,
-      passwordHash: SimpleAuthService.hashPassword(password),
-      subscriptionTier: planType,
-      dailyUsageCount: 0,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
-
-    // Save user
-    users[userId.toString()] = user;
 
     // Generate JWT token
     final token = SimpleAuthService.generateJwtToken(user);
@@ -1869,7 +1908,7 @@ Future<void> _handleSignupReal(HttpRequest request, Map<String, SimpleUser> user
   }
 }
 
-Future<void> _handleLoginReal(HttpRequest request, Map<String, SimpleUser> users) async {
+Future<void> _handleLoginReal(HttpRequest request, Map<String, SimpleUser> users, {DatabaseService? db}) async {
   if (request.method != 'POST') {
     request.response
       ..statusCode = 405
@@ -1895,12 +1934,16 @@ Future<void> _handleLoginReal(HttpRequest request, Map<String, SimpleUser> users
       throw Exception('Senha é obrigatória');
     }
 
-    // Find user by email
+    // Find user - try DB first
     SimpleUser? user;
-    for (final u in users.values) {
-      if (u.email == email) {
-        user = u;
-        break;
+    if (db != null) {
+      user = await db.findUserByEmail(email);
+    } else {
+      for (final u in users.values) {
+        if (u.email == email) {
+          user = u;
+          break;
+        }
       }
     }
 
@@ -1944,7 +1987,7 @@ Future<void> _handleLoginReal(HttpRequest request, Map<String, SimpleUser> users
   }
 }
 
-Future<void> _handleMeReal(HttpRequest request, Map<String, SimpleUser> users) async {
+Future<void> _handleMeReal(HttpRequest request, Map<String, SimpleUser> users, {DatabaseService? db}) async {
   try {
     final authHeader = request.headers.value('authorization');
     if (authHeader == null || !authHeader.startsWith('Bearer ')) {
@@ -1958,7 +2001,12 @@ Future<void> _handleMeReal(HttpRequest request, Map<String, SimpleUser> users) a
       throw Exception('Token inválido ou expirado');
     }
 
-    final user = users[userId.toString()];
+    SimpleUser? user;
+    if (db != null) {
+      user = await db.findUserById(userId);
+    } else {
+      user = users[userId.toString()];
+    }
     if (user == null) {
       throw Exception('Usuário não encontrado');
     }
@@ -1984,7 +2032,7 @@ Future<void> _handleMeReal(HttpRequest request, Map<String, SimpleUser> users) a
   }
 }
 
-Future<void> _handleUsageReal(HttpRequest request, Map<String, SimpleUser> users) async {
+Future<void> _handleUsageReal(HttpRequest request, Map<String, SimpleUser> users, {DatabaseService? db}) async {
   try {
     final authHeader = request.headers.value('authorization');
     if (authHeader == null || !authHeader.startsWith('Bearer ')) {
@@ -1998,7 +2046,12 @@ Future<void> _handleUsageReal(HttpRequest request, Map<String, SimpleUser> users
       throw Exception('Token inválido ou expirado');
     }
 
-    final user = users[userId.toString()];
+    SimpleUser? user;
+    if (db != null) {
+      user = await db.findUserById(userId);
+    } else {
+      user = users[userId.toString()];
+    }
     if (user == null) {
       throw Exception('Usuário não encontrado');
     }
