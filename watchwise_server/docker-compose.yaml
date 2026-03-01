@@ -1,58 +1,17 @@
 services:
-  # Serverpod application server
   app:
     build: .
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
     environment:
-      # Serverpod configuration via environment variables
-      SERVERPOD_DATABASE_HOST: postgres
-      SERVERPOD_DATABASE_PORT: 5432
-      SERVERPOD_DATABASE_NAME: watchwise
-      SERVERPOD_DATABASE_USER: postgres
-      SERVERPOD_PASSWORD_database: 5DSV-jq2bDFrY7oUFXvksaRamSiyJ8nO
-      SERVERPOD_REDIS_HOST: redis
-      SERVERPOD_REDIS_PORT: 6379
-      SERVERPOD_PASSWORD_redis: hRTeXLSLqSx0VPI0IL0b5nUbKKDntbfq
-      # Run in development mode for Docker
-      SERVERPOD_MODE: development
-      # Custom app variables
-      TMDB_API_KEY: 466fd9ba21e369cd51e7743d32b7833f
+      POSTGRES_HOST: ${POSTGRES_HOST:-rwk0o4osos80sgccso4g00co}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-AiSsIsT2024!SecurePassword}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      TMDB_API_KEY: ${TMDB_API_KEY:-466fd9ba21e369cd51e7743d32b7833f}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-
-  # PostgreSQL with pgvector
-  postgres:
-    image: pgvector/pgvector:pg16
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_DB: watchwise
-      POSTGRES_PASSWORD: "5DSV-jq2bDFrY7oUFXvksaRamSiyJ8nO"
-    volumes:
-      - watchwise_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # Redis cache
-  redis:
-    image: redis:6.2.6
-    command: redis-server --requirepass "hRTeXLSLqSx0VPI0IL0b5nUbKKDntbfq"
-    environment:
-      - REDIS_REPLICATION_MODE=master
-    healthcheck:
-      test: ["CMD", "redis-cli", "-a", "hRTeXLSLqSx0VPI0IL0b5nUbKKDntbfq", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-volumes:
-  watchwise_data:

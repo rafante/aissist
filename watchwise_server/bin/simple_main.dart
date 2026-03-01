@@ -18,26 +18,42 @@ Future<void> main() async {
   final llmService = RevivaLLMService();
   
   // Initialize PostgreSQL database (from runtime environment variables)
-  final dbHost = Platform.environment['POSTGRES_HOST'] ?? 'localhost';
   final dbPort = int.tryParse(Platform.environment['POSTGRES_PORT'] ?? '5432') ?? 5432;
   final dbName = Platform.environment['POSTGRES_DB'] ?? 'postgres';
   final dbUser = Platform.environment['POSTGRES_USER'] ?? 'postgres';
   final dbPass = Platform.environment['POSTGRES_PASSWORD'] ?? 'password';
   
-  final db = DatabaseService(
-    host: dbHost,
-    port: dbPort,
-    database: dbName,
-    username: dbUser,
-    password: dbPass,
-  );
+  // Try multiple hostnames in order of priority
+  final hostsToTry = <String>[
+    if (Platform.environment['POSTGRES_HOST'] != null) Platform.environment['POSTGRES_HOST']!,
+    'postgres',           // docker-compose service name
+    'rwk0o4osos80sgccso4g00co',  // Coolify resource UUID
+    'localhost',
+    '127.0.0.1',
+  ];
   
-  try {
-    await db.initialize();
-    print('✅ PostgreSQL connected and tables ready!');
-  } catch (e) {
-    print('⚠️ PostgreSQL connection failed: $e');
-    print('⚠️ Server will start but database operations will fail.');
+  DatabaseService? db;
+  for (final host in hostsToTry) {
+    print('🔌 Trying PostgreSQL at $host:$dbPort/$dbName...');
+    final candidate = DatabaseService(
+      host: host,
+      port: dbPort,
+      database: dbName,
+      username: dbUser,
+      password: dbPass,
+    );
+    try {
+      await candidate.initialize();
+      print('✅ PostgreSQL connected at $host!');
+      db = candidate;
+      break;
+    } catch (e) {
+      print('❌ Failed $host: $e');
+    }
+  }
+  
+  if (db == null) {
+    print('⚠️ All PostgreSQL hosts failed. Running in-memory mode.');
   }
   
   // Legacy in-memory fallback (kept for compatibility, DB is primary)
