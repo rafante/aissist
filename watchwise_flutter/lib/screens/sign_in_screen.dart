@@ -12,25 +12,23 @@ class SignInScreen extends StatefulWidget {
 }
 
 class _SignInScreenState extends State<SignInScreen> {
+  // TODO: Re-enable when auth IDP endpoints are configured on the server.
+  // Currently, client.auth is EndpointAuth (generated) and does not have
+  // authInfoListenable or isAuthenticated. These require the full
+  // serverpod_auth_idp_server integration.
   bool _isSignedIn = false;
 
   @override
   void initState() {
     super.initState();
-    client.auth.authInfoListenable.addListener(_updateSignedInState);
-    _isSignedIn = client.auth.isAuthenticated;
+    // client.auth.authInfoListenable.addListener(_updateSignedInState);
+    // _isSignedIn = client.auth.isAuthenticated;
   }
 
   @override
   void dispose() {
-    client.auth.authInfoListenable.removeListener(_updateSignedInState);
+    // client.auth.authInfoListenable.removeListener(_updateSignedInState);
     super.dispose();
-  }
-
-  void _updateSignedInState() {
-    setState(() {
-      _isSignedIn = client.auth.isAuthenticated;
-    });
   }
 
   @override

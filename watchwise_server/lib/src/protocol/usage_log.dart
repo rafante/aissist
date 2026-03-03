@@ -1,9 +1,6 @@
-import 'package:serverpod/serverpod.dart';
-
 /// Usage tracking for AIssist queries
-class UsageLog extends TableRow with ProtocolSerialization {
-  @override
-  String get tableName => 'usage_logs';
+class UsageLog {
+  static const String tableName = 'usage_logs';
 
   late int id;
   late int userId;
@@ -35,7 +32,6 @@ class UsageLog extends TableRow with ProtocolSerialization {
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
-  @override
   Map<String, dynamic> toJson() => {
     'id': id,
     'userId': userId,
@@ -52,8 +48,7 @@ class UsageLog extends TableRow with ProtocolSerialization {
     'createdAt': createdAt.toIso8601String(),
   };
 
-  @override
-  UsageLog fromJson(Map<String, dynamic> json) => UsageLog(
+  static UsageLog fromJson(Map<String, dynamic> json) => UsageLog(
     id: json['id'] ?? 0,
     userId: json['userId'],
     query: json['query'],

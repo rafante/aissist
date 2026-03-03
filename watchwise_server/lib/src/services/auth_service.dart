@@ -4,12 +4,12 @@ import 'package:crypto/crypto.dart';
 import 'package:jose/jose.dart';
 import 'package:serverpod/serverpod.dart';
 import '../protocol/user.dart';
-import '../protocol/subscription.dart';
 import '../protocol/usage_log.dart';
 
 /// JWT Authentication Service for AIssist
 class AuthService {
-  static const String _jwtSecret = 'aissist_jwt_secret_2026_v1'; // TODO: Environment variable
+  static const String _jwtSecret =
+      'aissist_jwt_secret_2026_v1'; // TODO: Environment variable
   static const Duration _jwtExpiry = Duration(hours: 24);
 
   /// Hash password with salt
@@ -24,19 +24,19 @@ class AuthService {
   static bool verifyPassword(String password, String hash) {
     final parts = hash.split(':');
     if (parts.length != 2) return false;
-    
+
     final storedHash = parts[0];
     final salt = parts[1];
-    
+
     final bytes = utf8.encode(password + salt);
     final digest = sha256.convert(bytes);
-    
+
     return storedHash == digest.toString();
   }
 
   /// Generate JWT token
   static String generateJwtToken(User user) {
-    final claims = JwtClaims.fromJson({
+    final claims = JsonWebTokenClaims.fromJson({
       'sub': user.id.toString(),
       'email': user.email,
       'tier': user.subscriptionTier,
@@ -46,31 +46,39 @@ class AuthService {
 
     final builder = JsonWebSignatureBuilder()
       ..jsonContent = claims.toJson()
-      ..addRecipient(JsonWebKey.fromJson({
-        'kty': 'oct',
-        'k': base64Url.encode(utf8.encode(_jwtSecret)),
-      }), algorithm: 'HS256');
+      ..addRecipient(
+        JsonWebKey.fromJson({
+          'kty': 'oct',
+          'k': base64Url.encode(utf8.encode(_jwtSecret)),
+        }),
+        algorithm: 'HS256',
+      );
 
     return builder.build().toCompactSerialization();
   }
 
   /// Verify JWT token and return user ID
-  static int? verifyJwtToken(String token) {
+  static Future<int?> verifyJwtToken(String token) async {
     try {
       final jws = JsonWebSignature.fromCompactSerialization(token);
       final keyStore = JsonWebKeyStore()
-        ..addKey(JsonWebKey.fromJson({
-          'kty': 'oct',
-          'k': base64Url.encode(utf8.encode(_jwtSecret)),
-        }));
+        ..addKey(
+          JsonWebKey.fromJson({
+            'kty': 'oct',
+            'k': base64Url.encode(utf8.encode(_jwtSecret)),
+          }),
+        );
 
-      final verified = jws.verify(keyStore);
+      final verified = await jws.verify(keyStore);
       if (!verified) return null;
 
       final payload = json.decode(jws.unverifiedPayload.stringContent);
       final exp = payload['exp'];
-      
-      if (exp != null && DateTime.fromMillisecondsSinceEpoch(exp * 1000).isBefore(DateTime.now())) {
+
+      if (exp != null &&
+          DateTime.fromMillisecondsSinceEpoch(
+            exp * 1000,
+          ).isBefore(DateTime.now())) {
         return null; // Token expired
       }
 
@@ -78,6 +86,29 @@ class AuthService {
     } catch (e) {
       return null;
     }
+  }
+
+  /// Helper to find a user by email using raw SQL
+  static Future<User?> _findUserByEmail(Session session, String email) async {
+    final result = await session.db.unsafeQuery(
+      'SELECT id, email, password_hash, created_at, updated_at, '
+      'subscription_tier, daily_usage_count, last_usage_reset, is_active '
+      'FROM users WHERE email = \$1',
+      parameters: QueryParameters.positional([email]),
+    );
+    if (result.isEmpty) return null;
+    final row = result.first;
+    return User(
+      id: row[0] as int,
+      email: row[1] as String,
+      passwordHash: row[2] as String,
+      createdAt: row[3] as DateTime?,
+      updatedAt: row[4] as DateTime?,
+      subscriptionTier: (row[5] as String?) ?? 'free',
+      dailyUsageCount: (row[6] as int?) ?? 0,
+      lastUsageReset: row[7] as DateTime?,
+      isActive: (row[8] as bool?) ?? true,
+    );
   }
 
   /// Register new user
@@ -93,37 +124,49 @@ class AuthService {
 
     // Validate password strength
     if (password.length < 6) {
-      return {'success': false, 'error': 'Password must be at least 6 characters'};
+      return {
+        'success': false,
+        'error': 'Password must be at least 6 characters',
+      };
     }
 
     try {
       // Check if user already exists
-      final existing = await session.db.findSingleRow<User>(
-        table: 'users',
-        where: 'email = @email',
-        substitutionValues: {'email': email},
-      );
+      final existing = await _findUserByEmail(session, email);
 
       if (existing != null) {
         return {'success': false, 'error': 'User already exists'};
       }
 
-      // Create new user
-      final user = User(
-        email: email.toLowerCase().trim(),
-        passwordHash: hashPassword(password),
-      );
+      final normalizedEmail = email.toLowerCase().trim();
+      final passwordHash = hashPassword(password);
 
-      final insertedUser = await session.db.insertTableRow(user);
+      // Insert new user and return the new row
+      final insertResult = await session.db.unsafeQuery(
+        'INSERT INTO users (email, password_hash, subscription_tier, daily_usage_count, is_active, created_at, updated_at, last_usage_reset) '
+        'VALUES (\$1, \$2, \'free\', 0, true, NOW(), NOW(), NOW()) '
+        'RETURNING id, email, password_hash, created_at, updated_at, subscription_tier, daily_usage_count, last_usage_reset, is_active',
+        parameters: QueryParameters.positional([normalizedEmail, passwordHash]),
+      );
+      final row = insertResult.first;
+      final insertedUser = User(
+        id: row[0] as int,
+        email: row[1] as String,
+        passwordHash: row[2] as String,
+        createdAt: row[3] as DateTime?,
+        updatedAt: row[4] as DateTime?,
+        subscriptionTier: (row[5] as String?) ?? 'free',
+        dailyUsageCount: (row[6] as int?) ?? 0,
+        lastUsageReset: row[7] as DateTime?,
+        isActive: (row[8] as bool?) ?? true,
+      );
 
       // Create free subscription
-      final subscription = Subscription(
-        userId: insertedUser.id,
-        tier: 'free',
-        status: 'active',
+      await session.db.unsafeExecute(
+        'INSERT INTO subscriptions (user_id, tier, status, start_date, created_at, updated_at) '
+        'VALUES (\$1, \'free\', \'active\', NOW(), NOW(), NOW())',
+        parameters: QueryParameters.positional([insertedUser.id]),
       );
-
-      await session.db.insertTableRow(subscription);
 
       // Generate JWT token
       final token = generateJwtToken(insertedUser);
@@ -146,11 +189,7 @@ class AuthService {
     String password,
   ) async {
     try {
-      final user = await session.db.findSingleRow<User>(
-        table: 'users',
-        where: 'email = @email AND is_active = true',
-        substitutionValues: {'email': email.toLowerCase().trim()},
-      );
+      final user = await _findUserByEmail(session, email.toLowerCase().trim());
 
       if (user == null || !verifyPassword(password, user.passwordHash)) {
         return {'success': false, 'error': 'Invalid credentials'};
@@ -173,7 +212,25 @@ class AuthService {
   /// Get user by ID
   static Future<User?> getUserById(Session session, int userId) async {
     try {
-      return await session.db.findById<User>(userId);
+      final result = await session.db.unsafeQuery(
+        'SELECT id, email, password_hash, created_at, updated_at, '
+        'subscription_tier, daily_usage_count, last_usage_reset, is_active '
+        'FROM users WHERE id = \$1',
+        parameters: QueryParameters.positional([userId]),
+      );
+      if (result.isEmpty) return null;
+      final row = result.first;
+      return User(
+        id: row[0] as int,
+        email: row[1] as String,
+        passwordHash: row[2] as String,
+        createdAt: row[3] as DateTime?,
+        updatedAt: row[4] as DateTime?,
+        subscriptionTier: (row[5] as String?) ?? 'free',
+        dailyUsageCount: (row[6] as int?) ?? 0,
+        lastUsageReset: row[7] as DateTime?,
+        isActive: (row[8] as bool?) ?? true,
+      );
     } catch (e) {
       print('Get user error: $e');
       return null;
@@ -227,7 +284,14 @@ class AuthService {
       final user = await getUserById(session, userId);
       if (user != null) {
         user.incrementUsage();
-        await session.db.updateTableRow(user);
+        await session.db.unsafeExecute(
+          'UPDATE users SET daily_usage_count = \$1, updated_at = NOW(), last_usage_reset = \$2 WHERE id = \$3',
+          parameters: QueryParameters.positional([
+            user.dailyUsageCount,
+            user.lastUsageReset.toIso8601String(),
+            user.id,
+          ]),
+        );
       }
 
       // Log the usage
@@ -240,7 +304,22 @@ class AuthService {
         ipAddress: ipAddress,
       );
 
-      await session.db.insertTableRow(usageLog);
+      await session.db.unsafeExecute(
+        'INSERT INTO usage_logs (user_id, query, response, response_length, processing_time_ms, llm_model, estimated_cost, status, user_agent, ip_address, created_at) '
+        'VALUES (\$1, \$2, \$3, \$4, \$5, \$6, \$7, \$8, \$9, \$10, NOW())',
+        parameters: QueryParameters.positional([
+          usageLog.userId,
+          usageLog.query,
+          usageLog.response,
+          usageLog.responseLength,
+          usageLog.processingTimeMs,
+          usageLog.llmModel,
+          usageLog.estimatedCost,
+          usageLog.status,
+          usageLog.userAgent,
+          usageLog.ipAddress,
+        ]),
+      );
     } catch (e) {
       print('Record usage error: $e');
     }
@@ -255,6 +334,8 @@ class AuthService {
 
   /// Validate email format
   static bool _isValidEmail(String email) {
-    return RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(email);
+    return RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    ).hasMatch(email);
   }
 }

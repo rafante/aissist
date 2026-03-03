@@ -25,9 +25,11 @@
       "name": "watchwise_server",
       "version": "0.0.0",
       "dependencies": [
+        "crypto",
         "http",
-        "serverpod",
-        "serverpod_auth_idp_server"
+        "jose",
+        "postgres",
+        "serverpod"
       ],
       "devDependencies": [
         "lints",
@@ -188,7 +190,7 @@
     },
     {
       "name": "test",
-      "version": "1.29.0",
+      "version": "1.26.3",
       "dependencies": [
         "analyzer",
         "async",
@@ -197,6 +199,7 @@
         "coverage",
         "http_multi_server",
         "io",
+        "js",
         "matcher",
         "node_preamble",
         "package_config",
@@ -234,6 +237,43 @@
       "dependencies": []
     },
     {
+      "name": "postgres",
+      "version": "3.5.9",
+      "dependencies": [
+        "async",
+        "buffer",
+        "charcode",
+        "collection",
+        "crypto",
+        "meta",
+        "pool",
+        "stack_trace",
+        "stream_channel"
+      ]
+    },
+    {
+      "name": "crypto",
+      "version": "3.0.7",
+      "dependencies": [
+        "typed_data"
+      ]
+    },
+    {
+      "name": "jose",
+      "version": "0.3.5",
+      "dependencies": [
+        "archive",
+        "asn1lib",
+        "collection",
+        "crypto_keys",
+        "http",
+        "http_parser",
+        "meta",
+        "typed_data",
+        "x509"
+      ]
+    },
+    {
       "name": "http",
       "version": "1.6.0",
       "dependencies": [
@@ -241,25 +281,6 @@
         "http_parser",
         "meta",
         "web"
-      ]
-    },
-    {
-      "name": "serverpod_auth_idp_server",
-      "version": "3.3.1",
-      "dependencies": [
-        "clock",
-        "dart_jsonwebtoken",
-        "email_validator",
-        "googleapis",
-        "googleapis_auth",
-        "http",
-        "meta",
-        "passkeys_server",
-        "pointycastle",
-        "serverpod",
-        "serverpod_auth_core_server",
-        "serverpod_shared",
-        "sign_in_with_apple_server"
       ]
     },
     {
@@ -367,7 +388,7 @@
     },
     {
       "name": "material_color_utilities",
-      "version": "0.13.0",
+      "version": "0.11.1",
       "dependencies": [
         "collection"
       ]
@@ -379,7 +400,7 @@
     },
     {
       "name": "characters",
-      "version": "1.4.1",
+      "version": "1.4.0",
       "dependencies": []
     },
     {
@@ -422,7 +443,7 @@
     },
     {
       "name": "matcher",
-      "version": "0.12.18",
+      "version": "0.12.17",
       "dependencies": [
         "async",
         "meta",
@@ -433,7 +454,7 @@
     },
     {
       "name": "test_api",
-      "version": "0.7.9",
+      "version": "0.7.7",
       "dependencies": [
         "async",
         "boolean_selector",
@@ -556,13 +577,6 @@
       "dependencies": []
     },
     {
-      "name": "crypto",
-      "version": "3.0.7",
-      "dependencies": [
-        "typed_data"
-      ]
-    },
-    {
       "name": "animations",
       "version": "2.1.1",
       "dependencies": [
@@ -618,7 +632,7 @@
     },
     {
       "name": "test_core",
-      "version": "0.6.15",
+      "version": "0.6.12",
       "dependencies": [
         "analyzer",
         "args",
@@ -714,6 +728,11 @@
       "dependencies": []
     },
     {
+      "name": "js",
+      "version": "0.7.2",
+      "dependencies": []
+    },
+    {
       "name": "io",
       "version": "1.0.5",
       "dependencies": [
@@ -764,7 +783,7 @@
     },
     {
       "name": "analyzer",
-      "version": "10.0.1",
+      "version": "8.4.1",
       "dependencies": [
         "_fe_analyzer_shared",
         "collection",
@@ -794,6 +813,29 @@
       ]
     },
     {
+      "name": "charcode",
+      "version": "1.4.0",
+      "dependencies": []
+    },
+    {
+      "name": "buffer",
+      "version": "1.2.3",
+      "dependencies": []
+    },
+    {
+      "name": "archive",
+      "version": "4.0.8",
+      "dependencies": [
+        "path",
+        "posix"
+      ]
+    },
+    {
+      "name": "asn1lib",
+      "version": "1.6.5",
+      "dependencies": []
+    },
+    {
       "name": "http_parser",
       "version": "4.1.2",
       "dependencies": [
@@ -804,88 +846,22 @@
       ]
     },
     {
-      "name": "sign_in_with_apple_server",
-      "version": "1.0.0",
-      "dependencies": [
-        "dart_jsonwebtoken",
-        "http",
-        "meta"
-      ]
-    },
-    {
-      "name": "serverpod_shared",
-      "version": "3.3.1",
-      "dependencies": [
-        "crypto",
-        "meta",
-        "path",
-        "super_string",
-        "yaml"
-      ]
-    },
-    {
-      "name": "serverpod_auth_core_server",
-      "version": "3.3.1",
-      "dependencies": [
-        "clock",
-        "crypto",
-        "dart_jsonwebtoken",
-        "http",
-        "image",
-        "meta",
-        "pointycastle",
-        "serverpod",
-        "serverpod_shared",
-        "uuid"
-      ]
-    },
-    {
-      "name": "pointycastle",
-      "version": "4.0.0",
-      "dependencies": [
-        "collection",
-        "convert"
-      ]
-    },
-    {
-      "name": "passkeys_server",
-      "version": "1.0.0",
+      "name": "x509",
+      "version": "0.2.4+3",
       "dependencies": [
         "asn1lib",
-        "cbor",
-        "crypto",
-        "dart_jsonwebtoken",
+        "crypto_keys",
+        "quiver"
+      ]
+    },
+    {
+      "name": "crypto_keys",
+      "version": "0.3.0+2",
+      "dependencies": [
+        "collection",
+        "meta",
         "pointycastle",
-        "uuid"
-      ]
-    },
-    {
-      "name": "googleapis_auth",
-      "version": "2.0.0",
-      "dependencies": [
-        "args",
-        "crypto",
-        "google_identity_services_web",
-        "http",
-        "http_parser"
-      ]
-    },
-    {
-      "name": "googleapis",
-      "version": "16.0.0",
-      "dependencies": [
-        "_discoveryapis_commons",
-        "http"
-      ]
-    },
-    {
-      "name": "dart_jsonwebtoken",
-      "version": "3.3.1",
-      "dependencies": [
-        "clock",
-        "convert",
-        "ed25519_edwards",
-        "pointycastle"
+        "quiver"
       ]
     },
     {
@@ -917,6 +893,17 @@
       ]
     },
     {
+      "name": "serverpod_shared",
+      "version": "3.3.1",
+      "dependencies": [
+        "crypto",
+        "meta",
+        "path",
+        "super_string",
+        "yaml"
+      ]
+    },
+    {
       "name": "serverpod_serialization",
       "version": "3.3.1",
       "dependencies": [
@@ -941,21 +928,6 @@
       "name": "redis",
       "version": "4.0.0",
       "dependencies": []
-    },
-    {
-      "name": "postgres",
-      "version": "3.5.9",
-      "dependencies": [
-        "async",
-        "buffer",
-        "charcode",
-        "collection",
-        "crypto",
-        "meta",
-        "pool",
-        "stack_trace",
-        "stream_channel"
-      ]
     },
     {
       "name": "mustache_template",
@@ -1277,65 +1249,43 @@
     },
     {
       "name": "_fe_analyzer_shared",
-      "version": "93.0.0",
+      "version": "91.0.0",
       "dependencies": [
-        "meta",
-        "source_span"
-      ]
-    },
-    {
-      "name": "super_string",
-      "version": "1.0.3",
-      "dependencies": []
-    },
-    {
-      "name": "image",
-      "version": "4.7.2",
-      "dependencies": [
-        "archive",
-        "meta",
-        "xml"
-      ]
-    },
-    {
-      "name": "cbor",
-      "version": "6.5.0",
-      "dependencies": [
-        "characters",
-        "collection",
-        "convert",
-        "hex",
-        "meta",
-        "typed_data"
-      ]
-    },
-    {
-      "name": "asn1lib",
-      "version": "1.6.5",
-      "dependencies": []
-    },
-    {
-      "name": "_discoveryapis_commons",
-      "version": "1.0.7",
-      "dependencies": [
-        "http",
-        "http_parser",
         "meta"
       ]
     },
     {
-      "name": "ed25519_edwards",
-      "version": "0.3.1",
+      "name": "posix",
+      "version": "6.0.3",
       "dependencies": [
-        "adaptive_number",
+        "ffi",
+        "meta",
+        "path"
+      ]
+    },
+    {
+      "name": "quiver",
+      "version": "3.2.2",
+      "dependencies": [
+        "matcher"
+      ]
+    },
+    {
+      "name": "pointycastle",
+      "version": "4.0.0",
+      "dependencies": [
         "collection",
-        "convert",
-        "crypto"
+        "convert"
       ]
     },
     {
       "name": "fixnum",
       "version": "1.1.1",
+      "dependencies": []
+    },
+    {
+      "name": "super_string",
+      "version": "1.0.3",
       "dependencies": []
     },
     {
@@ -1369,16 +1319,6 @@
         "web_socket",
         "web_socket_channel"
       ]
-    },
-    {
-      "name": "charcode",
-      "version": "1.4.0",
-      "dependencies": []
-    },
-    {
-      "name": "buffer",
-      "version": "1.2.3",
-      "dependencies": []
     },
     {
       "name": "platform",
@@ -1500,26 +1440,6 @@
       ]
     },
     {
-      "name": "archive",
-      "version": "4.0.8",
-      "dependencies": [
-        "path",
-        "posix"
-      ]
-    },
-    {
-      "name": "hex",
-      "version": "0.2.0",
-      "dependencies": []
-    },
-    {
-      "name": "adaptive_number",
-      "version": "1.0.0",
-      "dependencies": [
-        "fixnum"
-      ]
-    },
-    {
       "name": "native_toolchain_c",
       "version": "0.17.4",
       "dependencies": [
@@ -1557,15 +1477,6 @@
       "dependencies": [
         "collection",
         "meta"
-      ]
-    },
-    {
-      "name": "posix",
-      "version": "6.0.3",
-      "dependencies": [
-        "ffi",
-        "meta",
-        "path"
       ]
     }
   ],

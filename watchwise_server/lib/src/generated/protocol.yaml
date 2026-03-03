@@ -1,13 +1,5 @@
-emailIdp:
-  - login:
-  - startRegistration:
-  - verifyRegistrationCode:
-  - finishRegistration:
-  - startPasswordReset:
-  - verifyPasswordResetCode:
-  - finishPasswordReset:
-  - hasAccount:
-jwtRefresh:
-  - refreshAccessToken:
+ai:
+auth:
+content:
 greeting:
   - hello:

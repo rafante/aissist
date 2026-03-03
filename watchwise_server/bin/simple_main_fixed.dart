@@ -8,39 +8,45 @@ import '../lib/src/protocol/user.dart';
 /// Ultra-simple HTTP server for AIssist MVP with REAL authentication
 Future<void> main() async {
   print('🎬 Starting AIssist Complete Navigation System with REAL AUTH...');
-  
+
   // Get TMDB API key
-  const apiKey = String.fromEnvironment('TMDB_API_KEY', defaultValue: '466fd9ba21e369cd51e7743d32b7833f');
+  const apiKey = String.fromEnvironment(
+    'TMDB_API_KEY',
+    defaultValue: '466fd9ba21e369cd51e7743d32b7833f',
+  );
   final tmdb = TmdbService(apiKey: apiKey);
-  
+
   // Initialize Reviva LLM service
   final llmService = RevivaLLMService();
-  
-  // Create HTTP server  
+
+  // Create HTTP server
   final port = int.fromEnvironment('PORT', defaultValue: 8081);
   final server = await HttpServer.bind(InternetAddress.anyIPv4, port);
   print('🚀 Server running on port $port');
-  
+
   // In-memory user storage (TODO: Connect to real DB in production)
   final Map<String, User> _users = {};
   int _nextUserId = 1;
-  
+
   await for (final request in server) {
     final path = request.uri.path;
     final query = request.uri.queryParameters;
-    
+
     try {
       // Handle CORS preflight
       if (request.method == 'OPTIONS') {
         request.response
           ..headers.add('Access-Control-Allow-Origin', '*')
           ..headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-          ..headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+          ..headers.add(
+            'Access-Control-Allow-Headers',
+            'Content-Type, Authorization',
+          )
           ..statusCode = 200;
         await request.response.close();
         continue;
       }
-      
+
       switch (path) {
         case '/':
         case '/index':
@@ -99,7 +105,11 @@ Future<void> main() async {
 
 // REAL Authentication Handlers (no more mocking!)
 
-Future<void> _handleSignupReal(HttpRequest request, Map<String, User> users, int userId) async {
+Future<void> _handleSignupReal(
+  HttpRequest request,
+  Map<String, User> users,
+  int userId,
+) async {
   if (request.method != 'POST') {
     request.response
       ..statusCode = 405
@@ -113,7 +123,7 @@ Future<void> _handleSignupReal(HttpRequest request, Map<String, User> users, int
   try {
     final body = await utf8.decoder.bind(request).join();
     final data = jsonDecode(body) as Map<String, dynamic>;
-    
+
     final email = data['email'] as String?;
     final password = data['password'] as String?;
     final planType = data['planType'] as String? ?? 'free';
@@ -176,7 +186,10 @@ Future<void> _handleSignupReal(HttpRequest request, Map<String, User> users, int
   }
 }
 
-Future<void> _handleLoginReal(HttpRequest request, Map<String, User> users) async {
+Future<void> _handleLoginReal(
+  HttpRequest request,
+  Map<String, User> users,
+) async {
   if (request.method != 'POST') {
     request.response
       ..statusCode = 405
@@ -190,7 +203,7 @@ Future<void> _handleLoginReal(HttpRequest request, Map<String, User> users) asyn
   try {
     final body = await utf8.decoder.bind(request).join();
     final data = jsonDecode(body) as Map<String, dynamic>;
-    
+
     final email = data['email'] as String?;
     final password = data['password'] as String?;
 
@@ -259,8 +272,8 @@ Future<void> _handleMeReal(HttpRequest request, Map<String, User> users) async {
     }
 
     final token = authHeader.substring(7);
-    final userId = AuthService.verifyJwtToken(token);
-    
+    final userId = await AuthService.verifyJwtToken(token);
+
     if (userId == null) {
       throw Exception('Token inválido ou expirado');
     }
@@ -291,7 +304,10 @@ Future<void> _handleMeReal(HttpRequest request, Map<String, User> users) async {
   }
 }
 
-Future<void> _handleUsageReal(HttpRequest request, Map<String, User> users) async {
+Future<void> _handleUsageReal(
+  HttpRequest request,
+  Map<String, User> users,
+) async {
   try {
     final authHeader = request.headers.value('authorization');
     if (authHeader == null || !authHeader.startsWith('Bearer ')) {
@@ -299,8 +315,8 @@ Future<void> _handleUsageReal(HttpRequest request, Map<String, User> users) asyn
     }
 
     final token = authHeader.substring(7);
-    final userId = AuthService.verifyJwtToken(token);
-    
+    final userId = await AuthService.verifyJwtToken(token);
+
     if (userId == null) {
       throw Exception('Token inválido ou expirado');
     }
@@ -311,9 +327,11 @@ Future<void> _handleUsageReal(HttpRequest request, Map<String, User> users) asyn
     }
 
     // Calculate limits based on plan
-    final dailyLimit = user.subscriptionTier == 'pro' ? 500 
-                     : user.subscriptionTier == 'premium' ? 100 
-                     : 5;
+    final dailyLimit = user.subscriptionTier == 'pro'
+        ? 500
+        : user.subscriptionTier == 'premium'
+        ? 100
+        : 5;
     final remainingQueries = dailyLimit - user.dailyUsageCount;
 
     final response = {
@@ -322,9 +340,11 @@ Future<void> _handleUsageReal(HttpRequest request, Map<String, User> users) asyn
         'todayQueries': user.dailyUsageCount,
         'dailyLimit': dailyLimit,
         'remainingQueries': remainingQueries,
-        'resetTime': DateTime.now().add(const Duration(days: 1)).toIso8601String(),
+        'resetTime': DateTime.now()
+            .add(const Duration(days: 1))
+            .toIso8601String(),
         'subscriptionTier': user.subscriptionTier,
-      }
+      },
     };
 
     request.response
@@ -343,7 +363,13 @@ Future<void> _handleUsageReal(HttpRequest request, Map<String, User> users) asyn
   }
 }
 
-Future<void> _handleAIChat(HttpRequest request, TmdbService tmdb, RevivaLLMService llmService, Map<String, String> query, Map<String, User> users) async {
+Future<void> _handleAIChat(
+  HttpRequest request,
+  TmdbService tmdb,
+  RevivaLLMService llmService,
+  Map<String, String> query,
+  Map<String, User> users,
+) async {
   if (request.method != 'POST') {
     request.response
       ..statusCode = 405
@@ -353,7 +379,7 @@ Future<void> _handleAIChat(HttpRequest request, TmdbService tmdb, RevivaLLMServi
     await request.response.close();
     return;
   }
-  
+
   try {
     // Check authentication
     final authHeader = request.headers.value('authorization');
@@ -362,8 +388,8 @@ Future<void> _handleAIChat(HttpRequest request, TmdbService tmdb, RevivaLLMServi
     }
 
     final token = authHeader.substring(7);
-    final userId = AuthService.verifyJwtToken(token);
-    
+    final userId = await AuthService.verifyJwtToken(token);
+
     if (userId == null) {
       throw Exception('Token inválido ou expirado');
     }
@@ -374,22 +400,26 @@ Future<void> _handleAIChat(HttpRequest request, TmdbService tmdb, RevivaLLMServi
     }
 
     // Check rate limits
-    final dailyLimit = user.subscriptionTier == 'pro' ? 500 
-                     : user.subscriptionTier == 'premium' ? 100 
-                     : 5;
-    
+    final dailyLimit = user.subscriptionTier == 'pro'
+        ? 500
+        : user.subscriptionTier == 'premium'
+        ? 100
+        : 5;
+
     if (user.dailyUsageCount >= dailyLimit) {
-      throw Exception('Limite de consultas diárias atingido. Upgrade seu plano ou tente amanhã.');
+      throw Exception(
+        'Limite de consultas diárias atingido. Upgrade seu plano ou tente amanhã.',
+      );
     }
 
     final body = await utf8.decoder.bind(request).join();
     final data = jsonDecode(body) as Map<String, dynamic>;
-    
+
     final userQuery = data['query'] as String?;
     if (userQuery == null || userQuery.trim().isEmpty) {
       throw Exception('Query é obrigatória');
     }
-    
+
     // Search for movies related to the query to give AI context
     List<Map<String, dynamic>> movieContext = [];
     try {
@@ -402,46 +432,54 @@ Future<void> _handleAIChat(HttpRequest request, TmdbService tmdb, RevivaLLMServi
     } catch (e) {
       print('⚠️ Could not fetch movie context: $e');
     }
-    
+
     // Generate AI response
     final aiResponse = await llmService.generateMovieRecommendation(
       userQuery: userQuery,
       movieContext: movieContext,
     );
-    
+
     // Update usage count
     user.dailyUsageCount++;
     final queriesRemaining = dailyLimit - user.dailyUsageCount;
 
-    print('🤖 AI QUERY: User ${user.id} (${user.email}): "$userQuery" - Remaining: $queriesRemaining');
+    print(
+      '🤖 AI QUERY: User ${user.id} (${user.email}): "$userQuery" - Remaining: $queriesRemaining',
+    );
 
     request.response
       ..headers.contentType = ContentType.json
       ..headers.add('Access-Control-Allow-Origin', '*')
       ..headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
-      ..headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-      ..write(jsonEncode({
-        'success': true,
-        'query': userQuery,
-        'ai_response': aiResponse,
-        'movie_suggestions': movieContext,
-        'queriesRemaining': queriesRemaining,
-        'dailyLimit': dailyLimit,
-        'subscriptionTier': user.subscriptionTier,
-        'timestamp': DateTime.now().toIso8601String(),
-      }));
+      ..headers.add(
+        'Access-Control-Allow-Headers',
+        'Content-Type, Authorization',
+      )
+      ..write(
+        jsonEncode({
+          'success': true,
+          'query': userQuery,
+          'ai_response': aiResponse,
+          'movie_suggestions': movieContext,
+          'queriesRemaining': queriesRemaining,
+          'dailyLimit': dailyLimit,
+          'subscriptionTier': user.subscriptionTier,
+          'timestamp': DateTime.now().toIso8601String(),
+        }),
+      );
     await request.response.close();
-    
   } catch (e) {
     print('❌ Error in AI chat: $e');
     request.response
       ..statusCode = 400
       ..headers.contentType = ContentType.json
       ..headers.add('Access-Control-Allow-Origin', '*')
-      ..write(jsonEncode({
-        'success': false,
-        'error': e.toString(),
-      }));
+      ..write(
+        jsonEncode({
+          'success': false,
+          'error': e.toString(),
+        }),
+      );
     await request.response.close();
   }
 }
@@ -453,28 +491,30 @@ Future<void> _handleHealth(HttpRequest request) async {
   request.response
     ..headers.contentType = ContentType.json
     ..headers.add('Access-Control-Allow-Origin', '*')
-    ..write(jsonEncode({
-      'status': 'healthy',
-      'service': 'AIssist API with REAL AUTH',
-      'version': '2.0-FIXED',
-      'auth': 'JWT enabled',
-      'endpoints': [
-        '/ - Landing Page',
-        '/login - Login Page', 
-        '/signup - Cadastro Page',
-        '/dashboard - User Dashboard',
-        '/admin - Admin Panel',
-        '/health - API Health',
-        'POST /auth/signup - Create Account (REAL)',
-        'POST /auth/login - User Login (REAL)',
-        'GET /auth/me - User Info (REAL)',
-        'GET /auth/usage - Usage Stats (REAL)',
-        'POST /ai/chat - AI Chat with Rate Limiting (REAL)',
-        'GET /movies/popular - Popular Movies',
-        'GET /movies/search - Search Movies',
-        'GET /tv/search - Search TV Shows'
-      ]
-    }));
+    ..write(
+      jsonEncode({
+        'status': 'healthy',
+        'service': 'AIssist API with REAL AUTH',
+        'version': '2.0-FIXED',
+        'auth': 'JWT enabled',
+        'endpoints': [
+          '/ - Landing Page',
+          '/login - Login Page',
+          '/signup - Cadastro Page',
+          '/dashboard - User Dashboard',
+          '/admin - Admin Panel',
+          '/health - API Health',
+          'POST /auth/signup - Create Account (REAL)',
+          'POST /auth/login - User Login (REAL)',
+          'GET /auth/me - User Info (REAL)',
+          'GET /auth/usage - Usage Stats (REAL)',
+          'POST /ai/chat - AI Chat with Rate Limiting (REAL)',
+          'GET /movies/popular - Popular Movies',
+          'GET /movies/search - Search Movies',
+          'GET /tv/search - Search TV Shows',
+        ],
+      }),
+    );
   await request.response.close();
 }
 
@@ -483,28 +523,30 @@ Future<void> _handle404(HttpRequest request) async {
     ..statusCode = 404
     ..headers.contentType = ContentType.json
     ..headers.add('Access-Control-Allow-Origin', '*')
-    ..write(jsonEncode({
-      'error': 'Endpoint não encontrado',
-      'path': request.uri.path,
-      'available_pages': [
-        '/ - Página inicial',
-        '/login - Login',
-        '/signup - Cadastro',
-        '/dashboard - Dashboard do usuário',
-        '/admin - Painel admin'
-      ],
-      'available_api_endpoints': [
-        'POST /auth/signup - Criar conta (REAL)',
-        'POST /auth/login - Fazer login (REAL)',
-        'GET /auth/me - Dados do usuário (REAL)',
-        'GET /auth/usage - Estatísticas de uso (REAL)',
-        'POST /ai/chat - Chat com IA (REAL + Rate limiting)',
-        'GET /movies/popular - Filmes populares',
-        'GET /movies/search?query= - Buscar filmes',
-        'GET /tv/search?query= - Buscar séries',
-        'GET /health - Status da API'
-      ]
-    }));
+    ..write(
+      jsonEncode({
+        'error': 'Endpoint não encontrado',
+        'path': request.uri.path,
+        'available_pages': [
+          '/ - Página inicial',
+          '/login - Login',
+          '/signup - Cadastro',
+          '/dashboard - Dashboard do usuário',
+          '/admin - Painel admin',
+        ],
+        'available_api_endpoints': [
+          'POST /auth/signup - Criar conta (REAL)',
+          'POST /auth/login - Fazer login (REAL)',
+          'GET /auth/me - Dados do usuário (REAL)',
+          'GET /auth/usage - Estatísticas de uso (REAL)',
+          'POST /ai/chat - Chat com IA (REAL + Rate limiting)',
+          'GET /movies/popular - Filmes populares',
+          'GET /movies/search?query= - Buscar filmes',
+          'GET /tv/search?query= - Buscar séries',
+          'GET /health - Status da API',
+        ],
+      }),
+    );
   await request.response.close();
 }
 
@@ -514,10 +556,12 @@ Future<void> _handleError(HttpRequest request, Object error) async {
     ..statusCode = 500
     ..headers.contentType = ContentType.json
     ..headers.add('Access-Control-Allow-Origin', '*')
-    ..write(jsonEncode({
-      'error': 'Internal server error',
-      'message': error.toString()
-    }));
+    ..write(
+      jsonEncode({
+        'error': 'Internal server error',
+        'message': error.toString(),
+      }),
+    );
   await request.response.close();
 }
 
@@ -557,14 +601,26 @@ Future<void> _handleAdminPage(HttpRequest request) async {
   await request.response.close();
 }
 
-Future<void> _handlePopularMovies(HttpRequest request, TmdbService tmdb, Map<String, String> query) async {
+Future<void> _handlePopularMovies(
+  HttpRequest request,
+  TmdbService tmdb,
+  Map<String, String> query,
+) async {
   // TODO: Copy from original
 }
 
-Future<void> _handleSearchMovies(HttpRequest request, TmdbService tmdb, Map<String, String> query) async {
-  // TODO: Copy from original  
+Future<void> _handleSearchMovies(
+  HttpRequest request,
+  TmdbService tmdb,
+  Map<String, String> query,
+) async {
+  // TODO: Copy from original
 }
 
-Future<void> _handleSearchTV(HttpRequest request, TmdbService tmdb, Map<String, String> query) async {
+Future<void> _handleSearchTV(
+  HttpRequest request,
+  TmdbService tmdb,
+  Map<String, String> query,
+) async {
   // TODO: Copy from original
 }

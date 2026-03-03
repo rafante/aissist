@@ -1,9 +1,6 @@
-import 'package:serverpod/serverpod.dart';
-
 /// User entity for AIssist platform
-class User extends TableRow with ProtocolSerialization {
-  @override
-  String get tableName => 'users';
+class User {
+  static const String tableName = 'users';
 
   late int id;
   late String email;
@@ -25,12 +22,10 @@ class User extends TableRow with ProtocolSerialization {
     this.dailyUsageCount = 0,
     DateTime? lastUsageReset,
     this.isActive = true,
-  }) : 
-    createdAt = createdAt ?? DateTime.now(),
-    updatedAt = updatedAt ?? DateTime.now(),
-    lastUsageReset = lastUsageReset ?? DateTime.now();
+  }) : createdAt = createdAt ?? DateTime.now(),
+       updatedAt = updatedAt ?? DateTime.now(),
+       lastUsageReset = lastUsageReset ?? DateTime.now();
 
-  @override
   Map<String, dynamic> toJson() => {
     'id': id,
     'email': email,
@@ -43,8 +38,7 @@ class User extends TableRow with ProtocolSerialization {
     'isActive': isActive,
   };
 
-  @override
-  User fromJson(Map<String, dynamic> json) => User(
+  static User fromJson(Map<String, dynamic> json) => User(
     id: json['id'] ?? 0,
     email: json['email'],
     passwordHash: json['passwordHash'],
@@ -63,7 +57,7 @@ class User extends TableRow with ProtocolSerialization {
       'premium': 100, // High but not unlimited for abuse protection
       'pro': 500,
     };
-    
+
     final limit = limits[subscriptionTier] ?? 5;
     return dailyUsageCount >= limit;
   }
@@ -75,7 +69,7 @@ class User extends TableRow with ProtocolSerialization {
       'premium': 100,
       'pro': 500,
     };
-    
+
     final limit = limits[subscriptionTier] ?? 5;
     return (limit - dailyUsageCount).clamp(0, limit);
   }

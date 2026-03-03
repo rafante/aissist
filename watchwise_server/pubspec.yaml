@@ -6,6 +6,8 @@ description: Starting point for a Serverpod server.
 environment:
   sdk: '^3.8.0'
 
+resolution: workspace
+
 dependencies:
   serverpod: 3.3.1
   # TEMPORARILY DISABLED for initial deployment

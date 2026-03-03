@@ -34,7 +34,8 @@ void main() async {
     ..connectivityMonitor = FlutterConnectivityMonitor()
     ..authSessionManager = FlutterAuthSessionManager();
 
-  client.auth.initialize();
+  // TODO: Re-enable when auth IDP endpoints are configured
+  // client.auth.initialize();
 
   runApp(const MyApp());
 }

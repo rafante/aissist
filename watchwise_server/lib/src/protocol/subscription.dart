@@ -1,9 +1,6 @@
-import 'package:serverpod/serverpod.dart';
-
 /// Subscription entity for AIssist platform
-class Subscription extends TableRow with ProtocolSerialization {
-  @override
-  String get tableName => 'subscriptions';
+class Subscription {
+  static const String tableName = 'subscriptions';
 
   late int id;
   late int userId;
@@ -29,12 +26,10 @@ class Subscription extends TableRow with ProtocolSerialization {
     this.currency = 'BRL',
     DateTime? createdAt,
     DateTime? updatedAt,
-  }) : 
-    startDate = startDate ?? DateTime.now(),
-    createdAt = createdAt ?? DateTime.now(),
-    updatedAt = updatedAt ?? DateTime.now();
+  }) : startDate = startDate ?? DateTime.now(),
+       createdAt = createdAt ?? DateTime.now(),
+       updatedAt = updatedAt ?? DateTime.now();
 
-  @override
   Map<String, dynamic> toJson() => {
     'id': id,
     'userId': userId,
@@ -49,8 +44,7 @@ class Subscription extends TableRow with ProtocolSerialization {
     'updatedAt': updatedAt.toIso8601String(),
   };
 
-  @override
-  Subscription fromJson(Map<String, dynamic> json) => Subscription(
+  static Subscription fromJson(Map<String, dynamic> json) => Subscription(
     id: json['id'] ?? 0,
     userId: json['userId'],
     tier: json['tier'] ?? 'free',
@@ -117,16 +111,22 @@ class Subscription extends TableRow with ProtocolSerialization {
   static double getPriceForTier(String tier, {String currency = 'BRL'}) {
     if (currency == 'BRL') {
       switch (tier) {
-        case 'premium': return 19.90;
-        case 'pro': return 39.90;
-        default: return 0.0;
+        case 'premium':
+          return 19.90;
+        case 'pro':
+          return 39.90;
+        default:
+          return 0.0;
       }
     }
     // USD prices
     switch (tier) {
-      case 'premium': return 3.99;
-      case 'pro': return 7.99;
-      default: return 0.0;
+      case 'premium':
+        return 3.99;
+      case 'pro':
+        return 7.99;
+      default:
+        return 0.0;
     }
   }
 }

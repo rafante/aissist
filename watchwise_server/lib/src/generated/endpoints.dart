@@ -11,240 +11,54 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
-import '../auth/email_idp_endpoint.dart' as _i2;
-import '../auth/jwt_refresh_endpoint.dart' as _i3;
-import '../greetings/greeting_endpoint.dart' as _i4;
-import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
-    as _i5;
-import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
-    as _i6;
+import '../ai/ai_endpoint.dart' as _i2;
+import '../auth/auth_endpoint.dart' as _i3;
+import '../content/content_endpoint.dart' as _i4;
+import '../greetings/greeting_endpoint.dart' as _i5;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
   void initializeEndpoints(_i1.Server server) {
     var endpoints = <String, _i1.Endpoint>{
-      'emailIdp': _i2.EmailIdpEndpoint()
+      'ai': _i2.AiEndpoint()
         ..initialize(
           server,
-          'emailIdp',
+          'ai',
           null,
         ),
-      'jwtRefresh': _i3.JwtRefreshEndpoint()
+      'auth': _i3.AuthEndpoint()
         ..initialize(
           server,
-          'jwtRefresh',
+          'auth',
           null,
         ),
-      'greeting': _i4.GreetingEndpoint()
+      'content': _i4.ContentEndpoint()
+        ..initialize(
+          server,
+          'content',
+          null,
+        ),
+      'greeting': _i5.GreetingEndpoint()
         ..initialize(
           server,
           'greeting',
           null,
         ),
     };
-    connectors['emailIdp'] = _i1.EndpointConnector(
-      name: 'emailIdp',
-      endpoint: endpoints['emailIdp']!,
-      methodConnectors: {
-        'login': _i1.MethodConnector(
-          name: 'login',
-          params: {
-            'email': _i1.ParameterDescription(
-              name: 'email',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-            'password': _i1.ParameterDescription(
-              name: 'password',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['emailIdp'] as _i2.EmailIdpEndpoint).login(
-                session,
-                email: params['email'],
-                password: params['password'],
-              ),
-        ),
-        'startRegistration': _i1.MethodConnector(
-          name: 'startRegistration',
-          params: {
-            'email': _i1.ParameterDescription(
-              name: 'email',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['emailIdp'] as _i2.EmailIdpEndpoint)
-                  .startRegistration(
-                    session,
-                    email: params['email'],
-                  ),
-        ),
-        'verifyRegistrationCode': _i1.MethodConnector(
-          name: 'verifyRegistrationCode',
-          params: {
-            'accountRequestId': _i1.ParameterDescription(
-              name: 'accountRequestId',
-              type: _i1.getType<_i1.UuidValue>(),
-              nullable: false,
-            ),
-            'verificationCode': _i1.ParameterDescription(
-              name: 'verificationCode',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['emailIdp'] as _i2.EmailIdpEndpoint)
-                  .verifyRegistrationCode(
-                    session,
-                    accountRequestId: params['accountRequestId'],
-                    verificationCode: params['verificationCode'],
-                  ),
-        ),
-        'finishRegistration': _i1.MethodConnector(
-          name: 'finishRegistration',
-          params: {
-            'registrationToken': _i1.ParameterDescription(
-              name: 'registrationToken',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-            'password': _i1.ParameterDescription(
-              name: 'password',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['emailIdp'] as _i2.EmailIdpEndpoint)
-                  .finishRegistration(
-                    session,
-                    registrationToken: params['registrationToken'],
-                    password: params['password'],
-                  ),
-        ),
-        'startPasswordReset': _i1.MethodConnector(
-          name: 'startPasswordReset',
-          params: {
-            'email': _i1.ParameterDescription(
-              name: 'email',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['emailIdp'] as _i2.EmailIdpEndpoint)
-                  .startPasswordReset(
-                    session,
-                    email: params['email'],
-                  ),
-        ),
-        'verifyPasswordResetCode': _i1.MethodConnector(
-          name: 'verifyPasswordResetCode',
-          params: {
-            'passwordResetRequestId': _i1.ParameterDescription(
-              name: 'passwordResetRequestId',
-              type: _i1.getType<_i1.UuidValue>(),
-              nullable: false,
-            ),
-            'verificationCode': _i1.ParameterDescription(
-              name: 'verificationCode',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['emailIdp'] as _i2.EmailIdpEndpoint)
-                  .verifyPasswordResetCode(
-                    session,
-                    passwordResetRequestId: params['passwordResetRequestId'],
-                    verificationCode: params['verificationCode'],
-                  ),
-        ),
-        'finishPasswordReset': _i1.MethodConnector(
-          name: 'finishPasswordReset',
-          params: {
-            'finishPasswordResetToken': _i1.ParameterDescription(
-              name: 'finishPasswordResetToken',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-            'newPassword': _i1.ParameterDescription(
-              name: 'newPassword',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['emailIdp'] as _i2.EmailIdpEndpoint)
-                  .finishPasswordReset(
-                    session,
-                    finishPasswordResetToken:
-                        params['finishPasswordResetToken'],
-                    newPassword: params['newPassword'],
-                  ),
-        ),
-        'hasAccount': _i1.MethodConnector(
-          name: 'hasAccount',
-          params: {},
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['emailIdp'] as _i2.EmailIdpEndpoint)
-                  .hasAccount(session),
-        ),
-      },
+    connectors['ai'] = _i1.EndpointConnector(
+      name: 'ai',
+      endpoint: endpoints['ai']!,
+      methodConnectors: {},
     );
-    connectors['jwtRefresh'] = _i1.EndpointConnector(
-      name: 'jwtRefresh',
-      endpoint: endpoints['jwtRefresh']!,
-      methodConnectors: {
-        'refreshAccessToken': _i1.MethodConnector(
-          name: 'refreshAccessToken',
-          params: {
-            'refreshToken': _i1.ParameterDescription(
-              name: 'refreshToken',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['jwtRefresh'] as _i3.JwtRefreshEndpoint)
-                  .refreshAccessToken(
-                    session,
-                    refreshToken: params['refreshToken'],
-                  ),
-        ),
-      },
+    connectors['auth'] = _i1.EndpointConnector(
+      name: 'auth',
+      endpoint: endpoints['auth']!,
+      methodConnectors: {},
+    );
+    connectors['content'] = _i1.EndpointConnector(
+      name: 'content',
+      endpoint: endpoints['content']!,
+      methodConnectors: {},
     );
     connectors['greeting'] = _i1.EndpointConnector(
       name: 'greeting',
@@ -263,16 +77,12 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['greeting'] as _i4.GreetingEndpoint).hello(
+              ) async => (endpoints['greeting'] as _i5.GreetingEndpoint).hello(
                 session,
                 params['name'],
               ),
         ),
       },
     );
-    modules['serverpod_auth_idp'] = _i5.Endpoints()
-      ..initializeEndpoints(server);
-    modules['serverpod_auth_core'] = _i6.Endpoints()
-      ..initializeEndpoints(server);
   }
 }

@@ -6,6 +6,9 @@ class DatabaseService {
   late Connection _connection;
   bool _initialized = false;
 
+  /// Whether the database service has been initialized
+  bool get isInitialized => _initialized;
+
   final String host;
   final int port;
   final String database;
@@ -23,7 +26,7 @@ class DatabaseService {
   /// Connect and initialize tables
   Future<void> initialize() async {
     print('🔌 Connecting to PostgreSQL at $host:$port/$database...');
-    
+
     _connection = await Connection.open(
       Endpoint(
         host: host,
@@ -64,7 +67,13 @@ class DatabaseService {
 
     await _connection.execute('''
       CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+    ''');
+
+    await _connection.execute('''
       CREATE INDEX IF NOT EXISTS idx_query_logs_user_id ON query_logs(user_id);
+    ''');
+
+    await _connection.execute('''
       CREATE INDEX IF NOT EXISTS idx_query_logs_created_at ON query_logs(created_at);
     ''');
 
@@ -126,10 +135,14 @@ class DatabaseService {
   }
 
   /// Update user
-  Future<SimpleUser?> updateUser(int id, {String? email, String? subscriptionTier}) async {
+  Future<SimpleUser?> updateUser(
+    int id, {
+    String? email,
+    String? subscriptionTier,
+  }) async {
     final sets = <String>[];
     final params = <String, dynamic>{'id': id};
-    
+
     if (email != null) {
       sets.add('email = @email');
       params['email'] = email;
@@ -141,7 +154,9 @@ class DatabaseService {
     sets.add('updated_at = NOW()');
 
     final result = await _connection.execute(
-      Sql.named('UPDATE users SET ${sets.join(', ')} WHERE id = @id RETURNING *'),
+      Sql.named(
+        'UPDATE users SET ${sets.join(', ')} WHERE id = @id RETURNING *',
+      ),
       parameters: params,
     );
     if (result.isEmpty) return null;
@@ -194,7 +209,7 @@ class DatabaseService {
       '''),
       parameters: {'id': userId},
     );
-    
+
     final result = await _connection.execute(
       Sql.named('SELECT daily_usage_count FROM users WHERE id = @id'),
       parameters: {'id': userId},
@@ -225,10 +240,14 @@ class DatabaseService {
   }
 
   /// Get query logs
-  Future<List<Map<String, dynamic>>> getQueryLogs({int limit = 50, int? userId}) async {
-    String sql = 'SELECT ql.*, u.email FROM query_logs ql JOIN users u ON ql.user_id = u.id';
+  Future<List<Map<String, dynamic>>> getQueryLogs({
+    int limit = 50,
+    int? userId,
+  }) async {
+    String sql =
+        'SELECT ql.*, u.email FROM query_logs ql JOIN users u ON ql.user_id = u.id';
     final params = <String, dynamic>{};
-    
+
     if (userId != null) {
       sql += ' WHERE ql.user_id = @userId';
       params['userId'] = userId;
@@ -236,7 +255,10 @@ class DatabaseService {
     sql += ' ORDER BY ql.created_at DESC LIMIT @limit';
     params['limit'] = limit;
 
-    final result = await _connection.execute(Sql.named(sql), parameters: params);
+    final result = await _connection.execute(
+      Sql.named(sql),
+      parameters: params,
+    );
     return result.map((row) {
       final cols = row.toColumnMap();
       return {
@@ -254,12 +276,14 @@ class DatabaseService {
   /// Get stats
   Future<Map<String, dynamic>> getStats() async {
     final userCount = await _connection.execute('SELECT COUNT(*) FROM users');
-    final queryCount = await _connection.execute('SELECT COUNT(*) FROM query_logs');
+    final queryCount = await _connection.execute(
+      'SELECT COUNT(*) FROM query_logs',
+    );
     final todayQueries = await _connection.execute(
-      "SELECT COUNT(*) FROM query_logs WHERE created_at::date = CURRENT_DATE"
+      "SELECT COUNT(*) FROM query_logs WHERE created_at::date = CURRENT_DATE",
     );
     final tierCounts = await _connection.execute(
-      "SELECT subscription_tier, COUNT(*) as cnt FROM users GROUP BY subscription_tier"
+      "SELECT subscription_tier, COUNT(*) as cnt FROM users GROUP BY subscription_tier",
     );
 
     final tiers = <String, int>{};
@@ -284,8 +308,8 @@ class DatabaseService {
       passwordHash: cols['password_hash'] as String,
       subscriptionTier: (cols['subscription_tier'] as String?) ?? 'free',
       dailyUsageCount: (cols['daily_usage_count'] as int?) ?? 0,
-      createdAt: cols['created_at'] is DateTime 
-          ? cols['created_at'] as DateTime 
+      createdAt: cols['created_at'] is DateTime
+          ? cols['created_at'] as DateTime
           : DateTime.parse(cols['created_at'].toString()),
       updatedAt: cols['updated_at'] is DateTime
           ? cols['updated_at'] as DateTime
