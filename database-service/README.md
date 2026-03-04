@@ -12,8 +12,8 @@ Serviço separado PostgreSQL + Redis para o AIssist deployado no Coolify.
 
 2. **Configurar Environment Variables:**
    ```
-   POSTGRES_PASSWORD=AiSsIsT2024!SecurePassword
-   REDIS_PASSWORD=AiSsIsT2024!RedisPassword
+   POSTGRES_PASSWORD=AiSsIsT2024Secure
+   REDIS_PASSWORD=
    ```
 
 3. **Portas expostas:**

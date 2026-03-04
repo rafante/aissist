@@ -20,8 +20,8 @@ Separar o banco de dados em um serviço independente para que os dados dos usuá
 
 2. **Configurar Environment Variables:**
    ```env
-   POSTGRES_PASSWORD=AiSsIsT2024!SecurePassword
-   REDIS_PASSWORD=AiSsIsT2024!RedisPassword
+   POSTGRES_PASSWORD=AiSsIsT2024Secure
+   REDIS_PASSWORD=
    ```
 
 3. **Deploy e aguardar**
@@ -36,18 +36,18 @@ Separar o banco de dados em um serviço independente para que os dados dos usuá
 2. **Atualize as Environment Variables:**
    ```env
    # Database configuration (SUBSTITUA pelos IDs reais do passo 1)
-   SERVERPOD_DATABASE_HOST=<POSTGRES_CONTAINER_ID>
+   SERVERPOD_DATABASE_HOST=rwk0o4osos80sgccso4g00co
    SERVERPOD_DATABASE_PORT=5432
-   SERVERPOD_DATABASE_NAME=aissist
+   SERVERPOD_DATABASE_NAME=postgres
    SERVERPOD_DATABASE_USER=postgres
    SERVERPOD_DATABASE_REQUIRE_SSL=false
-   SERVERPOD_PASSWORD_database=AiSsIsT2024!SecurePassword
+   SERVERPOD_PASSWORD_database=AiSsIsT2024Secure
    
    # Redis configuration (SUBSTITUA pelos IDs reais do passo 1)
    SERVERPOD_REDIS_ENABLED=true
    SERVERPOD_REDIS_HOST=<REDIS_CONTAINER_ID>
    SERVERPOD_REDIS_PORT=6379
-   SERVERPOD_PASSWORD_redis=AiSsIsT2024!RedisPassword
+   SERVERPOD_PASSWORD_redis=
    
    # JWT Secret for authentication
    SERVERPOD_PASSWORD_JWT_SECRET=AiSsIsT2024!JwtSuperSecretKey

@@ -25,9 +25,9 @@ webServer:
 # External PostgreSQL service (deployed separately on Coolify)
 # These host IDs will be updated after database service deployment
 database:
-  host: ${SERVERPOD_DATABASE_HOST:-aissist-postgres}
+  host: ${SERVERPOD_DATABASE_HOST:-rwk0o4osos80sgccso4g00co}
   port: ${SERVERPOD_DATABASE_PORT:-5432}
-  name: ${SERVERPOD_DATABASE_NAME:-aissist}
+  name: ${SERVERPOD_DATABASE_NAME:-postgres}
   user: ${SERVERPOD_DATABASE_USER:-postgres}
   requireSsl: false
   maxConnectionCount: 20
